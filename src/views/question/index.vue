@@ -30,7 +30,6 @@
     <el-card class="table-card">
       <el-table ref="sourceTableRef" :data="sourceList" v-loading="loading" row-key="rowKey" @row-click="handleRowClick"
         @expand-change="handleExpandChange">
-        <!-- 展开行：该套卷下的题目 -->
         <el-table-column type="expand">
           <template #default="{ row }">
             <div class="expand-wrap">
@@ -59,13 +58,10 @@
           </template>
         </el-table-column>
 
-        <!-- 主行：套卷信息 -->
         <el-table-column prop="label" label="套卷名称" min-width="240">
           <template #default="{ row }">
             <div class="source-cell">
-              <el-icon>
-                <Files />
-              </el-icon>
+              <el-icon><Files /></el-icon>
               <span class="source-name">{{ row.label }}</span>
               <el-tag v-if="!row.source" type="warning" size="small" effect="plain">未分类</el-tag>
             </div>
@@ -80,8 +76,9 @@
 
         <el-table-column label="操作" width="220" align="center">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click.stop="toggleExpand(row)">{{ row.expanded ? '收起' : '展开'
-              }}</el-button>
+            <el-button link type="primary" size="small" @click.stop="toggleExpand(row)">
+              {{ row.expanded ? '收起' : '展开' }}
+            </el-button>
             <el-divider direction="vertical" />
             <el-button link type="primary" size="small" @click.stop="addQuestionToSource(row.source)">新增题目</el-button>
           </template>
@@ -93,59 +90,39 @@
       </el-table>
     </el-card>
 
-        <!-- 新增/编辑弹窗 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="form.id ? '编辑题目' : '新增题目'"
-      width="700px"
-      :close-on-click-modal="false"
-      destroy-on-close
-    >
+    <!-- 新增/编辑弹窗 -->
+    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑题目' : '新增题目'" width="700px"
+      :close-on-click-modal="false" destroy-on-close>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="110px">
         <el-form-item label="题目内容" prop="content">
-          <el-input
-            v-model="form.content"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入题目内容"
-          />
+          <el-input v-model="form.content" type="textarea" :rows="3" placeholder="请输入题目内容" />
         </el-form-item>
 
         <el-form-item label="题目图片">
           <div class="form-block">
             <div class="image-uploader">
-              <el-upload
-                :http-request="handleUpload"
-                :show-file-list="false"
-                accept="image/*"
-                :before-upload="beforeUpload"
-                class="image-upload"
-              >
-                <img
-                  v-if="form.imageUrl"
-                  :src="fullUrl(form.imageUrl)"
-                  class="upload-img"
-                  alt=""
-                  @error="form.imageUrl = ''"
-                />
+              <el-upload :http-request="handleUpload" :show-file-list="false" accept="image/*"
+                :before-upload="beforeUpload" class="image-upload">
+                <img v-if="form.imageUrl" :src="fullUrl(form.imageUrl)" class="upload-img" alt=""
+                  @error="form.imageUrl = ''" />
                 <div v-else class="upload-placeholder">
-                  <el-icon :size="24"><Plus /></el-icon>
+                  <el-icon :size="24">
+                    <Plus />
+                  </el-icon>
                   <span>点击上传</span>
                 </div>
               </el-upload>
 
-              <el-button size="small" type="primary" plain @click="handleScreenshot">
-                <el-icon><Camera /></el-icon>
+              <el-button size="small" type="primary" plain @click="handleScreenshot('question')">
+                <el-icon>
+                  <Camera />
+                </el-icon>
                 <span style="margin-left: 4px">截图上传</span>
               </el-button>
 
-              <el-button
-                v-if="form.imageUrl"
-                size="small"
-                type="danger"
-                plain
-                @click="form.imageUrl = ''"
-              >清除</el-button>
+              <el-button v-if="form.imageUrl" size="small" type="danger" plain @click="form.imageUrl = ''">
+                清除
+              </el-button>
             </div>
             <div class="upload-tip">
               截图上传：点击按钮唤起系统截图工具（或直接按 Win+Shift+S），截图后按 Ctrl+V 自动上传
@@ -155,11 +132,7 @@
 
         <el-form-item label="选项" prop="options">
           <div class="form-block">
-            <div
-              v-for="(opt, idx) in form.options"
-              :key="idx"
-              class="option-row"
-            >
+            <div v-for="(opt, idx) in form.options" :key="idx" class="option-row">
               <el-input v-model="opt.key" placeholder="A" style="width: 60px" />
 
               <el-select v-model="opt.type" style="width: 100px; margin: 0 8px">
@@ -167,44 +140,26 @@
                 <el-option label="图片" value="image" />
               </el-select>
 
-              <el-input
-                v-if="opt.type === 'text'"
-                v-model="opt.value"
-                placeholder="选项内容"
-                style="flex: 1"
-              />
+              <el-input v-if="opt.type === 'text'" v-model="opt.value" placeholder="选项内容" style="flex: 1" />
 
               <div v-else class="option-image-upload">
-                <el-upload
-                  :http-request="({ file }) => handleOptionUpload(file, opt)"
-                  :show-file-list="false"
-                  accept="image/*"
-                  class="option-upload"
-                >
-                  <img
-                    v-if="opt.value"
-                    :src="fullUrl(opt.value)"
-                    class="option-thumb"
-                    alt=""
-                  />
-                  <el-icon v-else class="option-upload-icon"><Plus /></el-icon>
+                <el-upload :http-request="({ file }) => handleOptionUpload(file, opt)" :show-file-list="false"
+                  accept="image/*" class="option-upload">
+                  <img v-if="opt.value" :src="fullUrl(opt.value)" class="option-thumb" alt="" />
+                  <el-icon v-else class="option-upload-icon">
+                    <Plus />
+                  </el-icon>
                 </el-upload>
-                <el-button
-                  v-if="opt.value"
-                  link
-                  type="danger"
-                  size="small"
-                  @click="opt.value = ''"
-                >清除</el-button>
+                <el-button size="small" type="primary" plain @click="handleScreenshot('option', idx)">
+                  截图
+                </el-button>
+                <el-button v-if="opt.value" link type="danger" size="small" @click="opt.value = ''">
+                  清除
+                </el-button>
               </div>
 
-              <el-button
-                type="danger"
-                :icon="Delete"
-                circle
-                style="margin-left: 8px"
-                @click="form.options.splice(idx, 1)"
-              />
+              <el-button type="danger" :icon="Delete" circle style="margin-left: 8px"
+                @click="form.options.splice(idx, 1)" />
             </div>
             <el-button link type="primary" @click="addOption" style="margin-top: 4px">
               + 添加选项
@@ -214,93 +169,78 @@
 
         <el-form-item label="正确答案" prop="correctOption">
           <el-input v-model="form.correctOption" placeholder="如 A" style="width: 120px" />
-       </el-form-item>
+        </el-form-item>
+
         <!-- 分平台解析 -->
         <el-form-item label="分平台解析">
           <div class="form-block">
             <div v-for="(item, idx) in form.analyses" :key="idx" class="analysis-row">
-              <el-select v-model="item.platform" placeholder="平台" style="width: 120px; flex-shrink: 0">
+              <el-select v-model="item.platform" placeholder="平台" style="width: 110px; flex-shrink: 0">
                 <el-option v-for="p in platformOptions" :key="p.dictValue" :label="p.dictLabel" :value="p.dictValue" />
               </el-select>
 
-              <el-input v-model="item.content" type="textarea" :rows="2" placeholder="该平台的解析内容"
-                style="flex: 1; margin: 0 8px" />
+              <el-select v-model="item.type" style="width: 90px; margin: 0 8px; flex-shrink: 0">
+                <el-option label="文字" value="text" />
+                <el-option label="图片" value="image" />
+              </el-select>
 
-              <el-button type="danger" :icon="Delete" circle @click="form.analyses.splice(idx, 1)" />
+              <el-input v-if="item.type === 'text'" v-model="item.content" type="textarea" :rows="2"
+                placeholder="该平台的解析内容" style="flex: 1" />
+
+              <div v-else class="analysis-image-upload">
+                <el-upload :http-request="({ file }) => handleAnalysisUpload(file, item)" :show-file-list="false"
+                  accept="image/*" class="analysis-upload">
+                  <img v-if="item.content" :src="fullUrl(item.content)" class="analysis-thumb" alt="" />
+                  <div v-else class="analysis-upload-icon">
+                    <el-icon>
+                      <Plus />
+                    </el-icon>
+                  </div>
+                </el-upload>
+                <el-button size="small" type="primary" plain
+                  @click="handleScreenshot('analysis', idx)">截图</el-button>
+                <el-button v-if="item.content" link type="danger" size="small" @click="item.content = ''">清除</el-button>
+              </div>
+
+              <el-button type="danger" :icon="Delete" circle style="margin-left: 8px"
+                @click="form.analyses.splice(idx, 1)" />
             </div>
 
-            <el-button link type="primary" @click="addAnalysis">
+            <el-button link type="primary" @click="addAnalysis" style="margin-top: 4px">
               + 添加平台解析
             </el-button>
           </div>
         </el-form-item>
+
         <el-form-item label="题目类型" prop="category">
           <div class="form-block">
             <div class="category-select-group">
-              <el-select
-                v-model="form.categoryL1"
-                placeholder="一级分类"
-                clearable
-                style="width: 160px"
-                @change="handleL1Change"
-              >
-                <el-option
-                  v-for="item in categoryL1Options"
-                  :key="item.dictValue"
-                  :label="item.dictLabel"
-                  :value="item.dictValue"
-                />
+              <el-select v-model="form.categoryL1" placeholder="一级分类" clearable style="width: 160px"
+                @change="handleL1Change">
+                <el-option v-for="item in categoryL1Options" :key="item.dictValue" :label="item.dictLabel"
+                  :value="item.dictValue" />
               </el-select>
 
-              <el-select
-                v-model="form.categoryL2"
-                placeholder="二级分类"
-                clearable
-                style="width: 160px"
-                :disabled="!form.categoryL1"
-                @change="handleL2Change"
-              >
-                <el-option
-                  v-for="item in formCategoryL2Options"
-                  :key="item.dictValue"
-                  :label="item.dictLabel"
-                  :value="item.dictValue"
-                />
+              <el-select v-model="form.categoryL2" placeholder="二级分类" clearable style="width: 160px"
+                :disabled="!form.categoryL1" @change="handleL2Change">
+                <el-option v-for="item in formCategoryL2Options" :key="item.dictValue" :label="item.dictLabel"
+                  :value="item.dictValue" />
               </el-select>
             </div>
           </div>
         </el-form-item>
 
         <el-form-item label="考试类型" prop="examType">
-          <el-select
-            v-model="form.examType"
-            placeholder="请选择考试类型"
-            clearable
-            style="width: 200px"
-          >
-            <el-option
-              v-for="item in examTypeOptions"
-              :key="item.dictValue"
-              :label="item.dictLabel"
-              :value="item.dictValue"
-            />
+          <el-select v-model="form.examType" placeholder="请选择考试类型" clearable style="width: 200px">
+            <el-option v-for="item in examTypeOptions" :key="item.dictValue" :label="item.dictLabel"
+              :value="item.dictValue" />
           </el-select>
         </el-form-item>
 
         <el-form-item label="题目来源" prop="source">
-          <el-select
-            v-model="form.source"
-            placeholder="请选择套卷"
-            filterable
-            clearable
-            style="width: 100%"
-          >
-            <el-option
-              v-for="item in sourceDictOptions"
-              :key="item.dictValue"
-              :label="item.dictLabel"
-              :value="item.dictValue"
-            />
+          <el-select v-model="form.source" placeholder="请选择套卷" filterable clearable style="width: 100%">
+            <el-option v-for="item in sourceDictOptions" :key="item.dictValue" :label="item.dictLabel"
+              :value="item.dictValue" />
           </el-select>
         </el-form-item>
 
@@ -327,50 +267,40 @@
           <div style="white-space: pre-wrap">{{ detail.content }}</div>
         </el-descriptions-item>
         <el-descriptions-item label="题目图片" :span="2">
-          <img
-            v-if="detail.imageUrl"
-            :src="fullUrl(detail.imageUrl)"
-            style="max-width: 240px; border-radius: 6px"
-            alt=""
-          />
+          <img v-if="detail.imageUrl" :src="fullUrl(detail.imageUrl)" style="max-width: 240px; border-radius: 6px"
+            alt="" />
           <span v-else>-</span>
         </el-descriptions-item>
         <el-descriptions-item label="默认解析" :span="2">
           <div style="white-space: pre-wrap">{{ detail.analysis || '-' }}</div>
         </el-descriptions-item>
 
+        <!-- ★ 分平台解析（区分文字/图片） -->
         <el-descriptions-item v-if="detail.analyses && detail.analyses.length" label="平台解析" :span="2">
           <div v-for="(a, i) in detail.analyses" :key="i" class="detail-analysis-item">
-            <el-tag size="small" effect="plain" type="warning">
+            <el-tag size="small" effect="plain" type="warning" style="margin-bottom: 6px">
               {{ platformLabel(a.platform) }}
             </el-tag>
-            <div class="detail-analysis-content">{{ a.content }}</div>
+
+            <!-- 文字 -->
+            <div v-if="a.type !== 'image'" class="detail-analysis-content">{{ a.content }}</div>
+
+            <!-- 图片 -->
+            <img v-else :src="fullUrl(a.content)" class="detail-analysis-img" alt="" />
           </div>
         </el-descriptions-item>
       </el-descriptions>
 
       <div class="detail-options-title">选项</div>
       <div class="detail-options">
-        <div
-          v-for="(opt, idx) in detail.options"
-          :key="idx"
-          class="detail-option-item"
-          :class="{ correct: opt.key === detail.correctOption }"
-        >
+        <div v-for="(opt, idx) in detail.options" :key="idx" class="detail-option-item"
+          :class="{ correct: opt.key === detail.correctOption }">
           <span class="detail-option-key">{{ opt.key }}.</span>
           <span v-if="opt.type === 'text'">{{ opt.value }}</span>
-          <img
-            v-else
-            :src="fullUrl(opt.value)"
-            style="max-width: 200px; border-radius: 6px"
-            alt=""
-          />
-          <el-tag
-            v-if="opt.key === detail.correctOption"
-            type="success"
-            size="small"
-            style="margin-left: 8px"
-          >正确答案</el-tag>
+          <img v-else :src="fullUrl(opt.value)" style="max-width: 200px; border-radius: 6px" alt="" />
+          <el-tag v-if="opt.key === detail.correctOption" type="success" size="small" style="margin-left: 8px">
+            正确答案
+          </el-tag>
         </div>
       </div>
 
@@ -401,7 +331,7 @@ const fullUrl = (u) => (u ? (u.startsWith('http') ? u : BACKEND + u) : '')
 
 // ==================== 列表 ====================
 const loading = ref(false)
-const sourceList = ref([])      // [{ source, label, count, questions, loading, expanded, rowKey }]
+const sourceList = ref([])
 const sourceTableRef = ref()
 const query = reactive({
   source: '',
@@ -411,7 +341,8 @@ const query = reactive({
 const detailVisible = ref(false)
 const detail = ref({
   id: null, content: '', options: [], correctOption: '',
-  category: '', examType: '', source: '', difficulty: 1, imageUrl: ''
+  category: '', examType: '', source: '', difficulty: 1, imageUrl: '',
+  analysis: '', analyses: []
 })
 
 // ==================== 字典 ====================
@@ -458,16 +389,13 @@ const platformLabel = (val) => {
 const loadSources = async () => {
   loading.value = true
   try {
-    // 1. 字典里配置的所有套卷
     const dictList = sourceDictOptions.value.length
       ? sourceDictOptions.value
       : await listDict('question_source')
 
-    // 2. 数据库统计
     const stats = await listQuestionSources()
     const statMap = new Map((stats || []).map(s => [s.source, s.count]))
 
-    // 3. 合并（字典为准）
     const merged = []
     const seen = new Set()
     dictList.forEach(d => {
@@ -480,27 +408,24 @@ const loadSources = async () => {
       seen.add(d.dictValue)
     })
 
-      // 4. 库里有但字典没有的
-      ; (stats || []).forEach(s => {
-        if (!seen.has(s.source)) {
-          const key = s.source || '__unclassified__'
-          merged.push({
-            rowKey: key,
-            source: s.source || '',
-            label: s.source || '未分类',
-            count: s.count
-          })
-          seen.add(s.source)
-        }
-      })
+    ;(stats || []).forEach(s => {
+      if (!seen.has(s.source)) {
+        const key = s.source || '__unclassified__'
+        merged.push({
+          rowKey: key,
+          source: s.source || '',
+          label: s.source || '未分类',
+          count: s.count
+        })
+        seen.add(s.source)
+      }
+    })
 
-    // 5. 搜索过滤
     let filtered = merged
     if (query.source) {
       filtered = filtered.filter(s => s.source === query.source)
     }
 
-    // 6. 保留已展开行的状态
     const oldMap = new Map(sourceList.value.map(s => [s.rowKey, s]))
     sourceList.value = filtered.map(s => {
       const old = oldMap.get(s.rowKey)
@@ -514,12 +439,10 @@ const loadSources = async () => {
   }
 }
 
-// 点击行 → 展开/收起
 const handleRowClick = (row) => {
   toggleExpand(row)
 }
 
-// 展开/收起
 const toggleExpand = async (row) => {
   const table = sourceTableRef.value
   if (!table) return
@@ -550,7 +473,6 @@ const handleExpandChange = (row, expandedRows) => {
   row.expanded = expandedRows.includes(row)
 }
 
-// 刷新某一行的题目
 const refreshRowQuestions = async (row) => {
   if (!row) return
   if (!row.expanded) {
@@ -565,7 +487,6 @@ const refreshRowQuestions = async (row) => {
   }
 }
 
-// 从某套卷进入新增题目
 const addQuestionToSource = async (source) => {
   await openEdit(null, source || '')
 }
@@ -592,8 +513,8 @@ const form = reactive({
   source: '',
   difficulty: 1,
   imageUrl: '',
-  analysis: '',       // 默认解析（保留）
-  analyses: [],       // ★ 分平台解析
+  analysis: '',
+  analyses: []
 })
 
 const rules = {
@@ -602,10 +523,10 @@ const rules = {
   source: [{ required: true, message: '请选择套卷', trigger: 'change' }]
 }
 
-// ★ 修复：加 defaultSource 参数
 const openEdit = async (row, defaultSource = '') => {
   await loadCategoryOptions()
   if (!examTypeOptions.value.length) await loadExamTypeOptions()
+  if (!platformOptions.value.length) await loadPlatformOptions()
 
   if (row) {
     const data = await getQuestionDetail(row.id)
@@ -625,6 +546,7 @@ const openEdit = async (row, defaultSource = '') => {
       examType: data.examType || '',
       analyses: (data.analyses || []).map(a => ({
         platform: a.platform,
+        type: a.type || 'text',           // ★ 回填 type
         content: a.content
       }))
     })
@@ -663,8 +585,9 @@ const addOption = () => {
   form.options.push({ key: nextKey, type: 'text', value: '' })
 }
 
+// ★ 加 type
 const addAnalysis = () => {
-  form.analyses.push({ platform: '', content: '' })
+  form.analyses.push({ platform: '', type: 'text', content: '' })
 }
 
 // ==================== 类型联动 ====================
@@ -714,7 +637,12 @@ const handleUpload = async ({ file }) => {
   await uploadFile(file)
 }
 
-const handleScreenshot = () => {
+// ★ 截图上传：记录目标位置
+const screenshotTarget = ref(null)   // { type: 'question'|'option'|'analysis', index: number }
+
+const handleScreenshot = (type, index = 0) => {
+  screenshotTarget.value = { type, index }
+
   try {
     const a = document.createElement('a')
     a.href = 'ms-screenclip:'
@@ -731,6 +659,7 @@ const handleScreenshot = () => {
   })
 }
 
+// ★ 粘贴事件：根据 target 分发
 const handlePaste = async (e) => {
   if (!dialogVisible.value) return
   const items = e.clipboardData?.items
@@ -751,14 +680,52 @@ const handlePaste = async (e) => {
 
   const file = new File([blob], `screenshot_${Date.now()}.png`,
     { type: blob.type || 'image/png' })
-
   if (!beforeUpload(file)) return
-  await uploadFile(file)
+
+  const target = screenshotTarget.value
+  if (!target) {
+    ElMessage.warning('请先点击要上传到的"截图"按钮')
+    return
+  }
+
+  try {
+    const url = await uploadImage(file)
+
+    if (target.type === 'question') {
+      form.imageUrl = url
+    } else if (target.type === 'option') {
+      const opt = form.options[target.index]
+      if (opt) {
+        opt.type = 'image'
+        opt.value = url
+      }
+    } else if (target.type === 'analysis') {
+      const a = form.analyses[target.index]
+      if (a) {
+        a.type = 'image'
+        a.content = url
+      }
+    }
+
+    ElMessage.success('截图上传成功')
+    screenshotTarget.value = null
+  } catch (err) {
+    ElMessage.error('截图上传失败')
+  }
 }
 
 const handleOptionUpload = async (file, opt) => {
   const url = await uploadImage(file)
   opt.value = url
+  opt.type = 'image'
+  ElMessage.success('上传成功')
+}
+
+// ★ 新增：解析图片上传
+const handleAnalysisUpload = async (file, item) => {
+  const url = await uploadImage(file)
+  item.content = url
+  item.type = 'image'
   ElMessage.success('上传成功')
 }
 
@@ -767,7 +734,6 @@ const handleSubmit = async () => {
   await formRef.value.validate()
   syncFormCategoryText()
 
-  // 记住当前 source，提交后用于刷新展开行
   const currentSource = form.source
 
   if (form.id) {
@@ -779,10 +745,8 @@ const handleSubmit = async () => {
   }
   dialogVisible.value = false
 
-  // ★ 修复：刷新套卷列表（不再用 loadData）
   await loadSources()
 
-  // 刷新对应套卷的展开内容
   const row = sourceList.value.find(s => s.source === currentSource)
   if (row) await refreshRowQuestions(row)
 }
@@ -795,6 +759,11 @@ const openDetail = async (row) => {
       key: o.key,
       type: o.type || 'text',
       value: o.value
+    })),
+    analyses: (data.analyses || []).map(a => ({
+      platform: a.platform,
+      type: a.type || 'text',
+      content: a.content
     }))
   }
   detailVisible.value = true
@@ -807,7 +776,6 @@ const handleDelete = async (row) => {
   await deleteQuestion(row.id)
   ElMessage.success('删除成功')
 
-  // ★ 修复：刷新套卷列表 + 当前展开行
   await loadSources()
   const sourceRow = sourceList.value.find(s => s.source === row.source)
   if (sourceRow) await refreshRowQuestions(sourceRow)
@@ -819,8 +787,8 @@ onMounted(async () => {
   await loadCategoryOptions()
   await loadExamTypeOptions()
   await loadSourceDict()
-  await loadSources()
   await loadPlatformOptions()
+  await loadSources()
 })
 
 onUnmounted(() => {
@@ -829,15 +797,10 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.search-card {
-  margin-bottom: 16px;
-}
+.search-card { margin-bottom: 16px; }
+.table-card { padding: 0; }
 
-.table-card {
-  padding: 0;
-}
-
-/* ==================== ★ 修复白框的关键 ==================== */
+/* ==================== 表单块通用 ==================== */
 .form-block {
   width: 100%;
   display: flex;
@@ -845,7 +808,6 @@ onUnmounted(() => {
   gap: 8px;
 }
 
-/* el-form-item content 默认 flex-wrap，多个根节点会出现"白条" */
 :deep(.el-form-item__content) {
   border: none !important;
   background: transparent !important;
@@ -855,14 +817,16 @@ onUnmounted(() => {
 
 /* 清掉 el-upload 的行内块空隙和白底 */
 .image-upload,
-.option-upload {
+.option-upload,
+.analysis-upload {
   display: inline-block;
   line-height: 0;
   font-size: 0;
 }
 
 .image-upload :deep(.el-upload),
-.option-upload :deep(.el-upload) {
+.option-upload :deep(.el-upload),
+.analysis-upload :deep(.el-upload) {
   line-height: 0;
   font-size: 0;
   background: transparent;
@@ -870,7 +834,7 @@ onUnmounted(() => {
   padding: 0;
 }
 
-/* ==================== 图片上传 ==================== */
+/* ==================== 题干图片上传 ==================== */
 .image-uploader {
   display: flex;
   align-items: center;
@@ -952,6 +916,44 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
+/* ==================== 分平台解析 ==================== */
+.analysis-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.analysis-image-upload {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analysis-thumb {
+  display: block;
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.analysis-upload-icon {
+  width: 80px;
+  height: 60px;
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 20px;
+  cursor: pointer;
+}
+
 /* ==================== 类型下拉组 ==================== */
 .category-select-group {
   display: flex;
@@ -991,6 +993,27 @@ onUnmounted(() => {
   margin-right: 8px;
 }
 
+/* ★ 分平台解析展示 */
+.detail-analysis-item {
+  margin-bottom: 12px;
+}
+
+.detail-analysis-content {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.detail-analysis-img {
+  display: block;
+  margin-top: 6px;
+  max-width: 320px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
 /* ==================== 套卷列表 ==================== */
 .expand-wrap {
   padding: 12px 24px 12px 60px;
@@ -1011,21 +1034,5 @@ onUnmounted(() => {
 
 :deep(.el-table__row) {
   cursor: pointer;
-}
-.analysis-row {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 8px;
-  width: 100%;
-}
-.detail-analysis-item {
-  margin-bottom: 12px;
-}
-.detail-analysis-content {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #606266;
-  line-height: 1.7;
-  white-space: pre-wrap;
 }
 </style>
