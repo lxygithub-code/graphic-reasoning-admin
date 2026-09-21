@@ -815,7 +815,6 @@ onUnmounted(() => {
   line-height: normal;
 }
 
-/* 清掉 el-upload 的行内块空隙和白底 */
 .image-upload,
 .option-upload,
 .analysis-upload {
@@ -848,34 +847,34 @@ onUnmounted(() => {
   height: 120px;
   object-fit: cover;
   border-radius: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(0, 240, 255, 0.2);
 }
 
 .upload-placeholder {
   width: 120px;
   height: 120px;
-  border: 1px dashed #ccc;
+  border: 1px dashed rgba(0, 240, 255, 0.3);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: #999;
+  color: #8892c4;
   cursor: pointer;
   gap: 6px;
   transition: all 0.2s;
 }
 
 .upload-placeholder:hover {
-  border-color: #409eff;
-  color: #409eff;
-  background: #f0f7ff;
+  border-color: #00f0ff;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.08);
 }
 
 .upload-tip {
   font-size: 12px;
-  color: #999;
+  color: #8892c4;
   line-height: 1.6;
 }
 
@@ -900,19 +899,19 @@ onUnmounted(() => {
   height: 60px;
   object-fit: cover;
   border-radius: 6px;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(0, 240, 255, 0.2);
 }
 
 .option-upload-icon {
   width: 60px;
   height: 60px;
-  border: 1px dashed #ccc;
+  border: 1px dashed rgba(0, 240, 255, 0.3);
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  color: #999;
+  color: #8892c4;
   cursor: pointer;
 }
 
@@ -937,19 +936,19 @@ onUnmounted(() => {
   height: 60px;
   object-fit: cover;
   border-radius: 6px;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(0, 240, 255, 0.2);
   cursor: pointer;
 }
 
 .analysis-upload-icon {
   width: 80px;
   height: 60px;
-  border: 1px dashed #ccc;
+  border: 1px dashed rgba(0, 240, 255, 0.3);
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: #8892c4;
   font-size: 20px;
   cursor: pointer;
 }
@@ -966,6 +965,7 @@ onUnmounted(() => {
   margin: 16px 0 8px;
   font-weight: bold;
   font-size: 14px;
+  color: #e0e6ff;
 }
 
 .detail-options {
@@ -978,22 +978,23 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  background: #f7f8fa;
+  background: rgba(15, 22, 40, 0.6);
+  color: #e0e6ff;
   border-radius: 6px;
   font-size: 14px;
 }
 
 .detail-option-item.correct {
-  background: #f0f9eb;
-  border: 1px solid #e1f3d8;
+  background: rgba(0, 255, 157, 0.1);
+  border: 1px solid rgba(0, 255, 157, 0.4);
 }
 
 .detail-option-key {
   font-weight: bold;
   margin-right: 8px;
+  color: #00f0ff;
 }
 
-/* ★ 分平台解析展示 */
 .detail-analysis-item {
   margin-bottom: 12px;
 }
@@ -1001,7 +1002,7 @@ onUnmounted(() => {
 .detail-analysis-content {
   margin-top: 6px;
   font-size: 13px;
-  color: #606266;
+  color: #c4cce6;
   line-height: 1.7;
   white-space: pre-wrap;
 }
@@ -1017,7 +1018,7 @@ onUnmounted(() => {
 /* ==================== 套卷列表 ==================== */
 .expand-wrap {
   padding: 12px 24px 12px 60px;
-  background: #fafafa;
+  background: transparent;
 }
 
 .source-cell {
@@ -1029,10 +1030,6 @@ onUnmounted(() => {
 
 .source-name {
   font-weight: 600;
-  color: #303133;
-}
-
-:deep(.el-table__row) {
-  cursor: pointer;
+  color: #e0e6ff;
 }
 </style>

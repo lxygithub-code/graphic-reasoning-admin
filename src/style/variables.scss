@@ -1,0 +1,35 @@
+// ============ 深色科技主题 ============
+// 背景层
+$bg-base:        #050810;   // 最深背景
+$bg-body:        #0d1428;   // 页面背景
+$bg-card:        rgba(20, 28, 48, 0.9);   // 卡片背景
+$bg-card-hover:  rgba(25, 35, 60, 0.95);
+$bg-input:       rgba(15, 22, 40, 0.8);
+
+// 边框
+$border-base:    rgba(0, 240, 255, 0.15);
+$border-hover:   rgba(0, 240, 255, 0.5);
+$border-active:  rgba(0, 240, 255, 0.8);
+
+// 文字
+$text-primary:   #e0e6ff;   // 主文字
+$text-regular:   #c4cce6;   // 常规
+$text-secondary: #8892c4;   // 次要
+$text-disabled:  #5a6288;   // 禁用
+
+// 主题色（霓虹四色）
+$color-primary:  #00f0ff;   // 青
+$color-purple:   #7c4dff;   // 紫
+$color-success:  #00ff9d;   // 绿
+$color-danger:   #ff4d94;   // 粉/红
+$color-warning:  #ffaa33;   // 橙
+
+// 渐变
+$gradient-primary: linear-gradient(135deg, #00f0ff, #7c4dff);
+$gradient-purple:  linear-gradient(135deg, #7c4dff, #ff4d94);
+$gradient-success: linear-gradient(135deg, #00ff9d, #00f0ff);
+
+// 阴影
+$shadow-card:    0 8px 30px rgba(0, 240, 255, 0.1);
+$shadow-hover:   0 8px 30px rgba(0, 240, 255, 0.2);
+$shadow-glow:    0 0 20px rgba(0, 240, 255, 0.3);
