@@ -46,10 +46,11 @@ export function batchDeleteQuestion(ids) {
   })
 }
 
-export function listQuestionSources() {
+export function listQuestionSources(params = {}) {
   return request({
     url: '/admin/question/sources',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 

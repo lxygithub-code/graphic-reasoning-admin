@@ -1,13 +1,45 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>graphic-reasoning-admin</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="zh-CN" style="background: #050810;">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="https://graphic-push-images.oss-cn-beijing.aliyuncs.com/static/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>图推后台管理系统</title>
+
+  <!-- ★ 关键：内联样式，CSS 加载前就生效 -->
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #050810 !important;
+      color: #e0e6ff;
+    }
+    #app {
+      background: #050810;
+      min-height: 100vh;
+    }
+    /* 可选：加载动画 */
+    #app:empty::before {
+      content: '';
+      display: block;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 40px;
+      height: 40px;
+      margin: -20px 0 0 -20px;
+      border: 3px solid rgba(0, 240, 255, 0.2);
+      border-top-color: #00f0ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
 </html>

@@ -1,18 +1,25 @@
 // src/style/index.scss
 @use './variables.scss' as *;
 
-/* ============ 全局基础 ============ */
+/* ============================================================
+ *  0. 全局基础
+ * ============================================================ */
+:root {
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; }
 
 html, body, #app {
   height: 100%;
   margin: 0;
   padding: 0;
+  background: #050810;
+  color: #e0e6ff;
 }
 
 body {
   background: radial-gradient(ellipse at top, #0d1428 0%, #050810 80%);
-  color: #e0e6ff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -22,8 +29,11 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: rgba(0, 240, 255, 0.4); }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* ============ ★ 覆盖 Element Plus 变量（最关键） ============ */
+/* ============================================================
+ *  1. Element Plus CSS 变量覆盖
+ * ============================================================ */
 :root {
+  /* 主色 */
   --el-color-primary: #00f0ff;
   --el-color-primary-light-3: #4dd0ff;
   --el-color-primary-light-5: #80e0ff;
@@ -32,21 +42,25 @@ body {
   --el-color-primary-light-9: #e6f9ff;
   --el-color-primary-dark-2: #00c0cc;
 
+  /* 状态色 */
   --el-color-success: #00ff9d;
   --el-color-warning: #ffaa33;
   --el-color-danger: #ff4d94;
   --el-color-error: #ff4d94;
   --el-color-info: #8892c4;
 
+  /* 文字 */
   --el-text-color-primary: #e0e6ff;
   --el-text-color-regular: #c4cce6;
   --el-text-color-secondary: #8892c4;
   --el-text-color-disabled: #5a6288;
 
+  /* 背景 */
   --el-bg-color: rgba(20, 28, 48, 0.9);
   --el-bg-color-page: #0d1428;
   --el-bg-color-overlay: rgba(20, 28, 48, 0.98);
 
+  /* 边框 */
   --el-border-color: rgba(0, 240, 255, 0.15);
   --el-border-color-light: rgba(0, 240, 255, 0.15);
   --el-border-color-lighter: rgba(0, 240, 255, 0.15);
@@ -54,27 +68,19 @@ body {
   --el-border-color-dark: rgba(0, 240, 255, 0.5);
   --el-border-color-darker: rgba(0, 240, 255, 0.8);
 
+  /* 填充 */
   --el-fill-color: rgba(15, 22, 40, 0.6);
   --el-fill-color-light: rgba(15, 22, 40, 0.8);
   --el-fill-color-lighter: rgba(15, 22, 40, 0.4);
   --el-fill-color-blank: transparent;
   --el-mask-color: rgba(5, 8, 16, 0.8);
-
-  /* ★ 表格专用变量 */
-  --el-table-bg-color: transparent;
-  --el-table-tr-bg-color: transparent;
-  --el-table-header-bg-color: rgba(15, 22, 40, 0.95);
-  --el-table-header-text-color: #8892c4;
-  --el-table-text-color: #e0e6ff;
-  --el-table-border-color: rgba(0, 240, 255, 0.12);
-  --el-table-row-hover-bg-color: rgba(0, 240, 255, 0.1);
-  --el-table-current-row-bg-color: rgba(0, 240, 255, 0.12);
-  --el-table-expanded-cell-bg-color: rgba(10, 15, 30, 0.7);
 }
 
-/* ============ 表格（终极覆盖） ============ */
+/* ============================================================
+ *  2. 表格（含展开行、嵌套表格）
+ * ============================================================ */
 .el-table {
-  /* CSS 变量（关键） */
+  /* ★ 表格变量：必须在 .el-table 里定义才能覆盖 Element Plus */
   --el-table-bg-color: transparent !important;
   --el-table-tr-bg-color: transparent !important;
   --el-table-header-bg-color: rgba(15, 22, 40, 0.95) !important;
@@ -90,6 +96,7 @@ body {
 
   &::before, &::after { display: none !important; }
 
+  /* 所有外层容器透明 */
   .el-table__inner-wrapper,
   .el-table__header-wrapper,
   .el-table__body-wrapper,
@@ -98,7 +105,7 @@ body {
     &::before, &::after { display: none !important; }
   }
 
-  /* ★ 表头：所有文字强制白色 */
+  /* 表头 */
   th.el-table__cell {
     background: rgba(15, 22, 40, 0.95) !important;
     border-bottom: 1px solid rgba(0, 240, 255, 0.15) !important;
@@ -110,7 +117,7 @@ body {
     }
   }
 
-  /* ★ 表体：所有文字强制白色 */
+  /* 表体 */
   td.el-table__cell {
     background: rgba(20, 28, 48, 0.5) !important;
     border-bottom: 1px solid rgba(0, 240, 255, 0.08) !important;
@@ -123,17 +130,12 @@ body {
     }
   }
 
-  /* 展开箭头 */
-  .el-table__expand-icon {
-    color: #8892c4 !important;
-  }
-
-  /* 行斑马纹 */
+  /* 斑马纹 */
   .el-table__row--striped td.el-table__cell {
     background: rgba(15, 22, 40, 0.6) !important;
   }
 
-  /* 悬停 */
+  /* 行悬停 */
   tr:hover > td.el-table__cell,
   tr.hover-row > td.el-table__cell {
     background: rgba(0, 240, 255, 0.1) !important;
@@ -143,16 +145,43 @@ body {
     }
   }
 
+  /* 当前行 */
   tr.current-row > td.el-table__cell {
     background: rgba(0, 240, 255, 0.12) !important;
   }
 
+  /* 展开箭头 */
+  .el-table__expand-icon {
+    color: #8892c4 !important;
+  }
+
   /* 空状态 */
-  .el-table__empty-block { background: transparent !important; }
+  .el-table__empty-block {
+    background: transparent !important;
+    min-height: 200px;
+  }
   .el-table__empty-text { color: #8892c4 !important; }
+
+  /* ★ 修复：表格加载中/无数据时的白色背景 */
+  .el-table__body-wrapper .el-scrollbar,
+  .el-table__body-wrapper .el-scrollbar__view,
+  .el-table__header-wrapper .el-scrollbar {
+    background: transparent !important;
+  }
+
+  /* 复选框列 */
+  .el-table-column--selection .cell {
+    background: transparent !important;
+  }
+
+  /* 固定列 */
+  .el-table-fixed-column--left,
+  .el-table-fixed-column--right {
+    background: rgba(15, 22, 40, 0.95) !important;
+  }
 }
 
-/* ============ 展开行 + 嵌套表格 ============ */
+/* 展开行 + 嵌套表格 */
 .el-table__expanded-cell {
   background: rgba(10, 15, 30, 0.7) !important;
   border-bottom: 1px solid rgba(0, 240, 255, 0.15) !important;
@@ -161,28 +190,23 @@ body {
 
   .el-table {
     background: transparent !important;
-    --el-table-bg-color: transparent !important;
-    --el-table-tr-bg-color: transparent !important;
-    --el-table-header-bg-color: rgba(10, 15, 30, 0.95) !important;
-    --el-table-text-color: #e0e6ff !important;
-    --el-table-header-text-color: #8892c4 !important;
 
     .el-table__inner-wrapper,
     .el-table__header-wrapper,
-    .el-table__body-wrapper {
+    .el-table__body-wrapper,
+    .el-table__body-wrapper .el-scrollbar,
+    .el-table__body-wrapper .el-scrollbar__view {
       background: transparent !important;
     }
 
     th.el-table__cell {
       background: rgba(10, 15, 30, 0.95) !important;
-      color: #8892c4 !important;
-      .cell { background: transparent !important; color: #8892c4 !important; }
+      &, .cell, * { color: #8892c4 !important; }
     }
 
     td.el-table__cell {
       background: rgba(10, 15, 30, 0.5) !important;
-      color: #e0e6ff !important;
-      .cell { background: transparent !important; color: #e0e6ff !important; }
+      &, .cell, .cell *, span { color: #e0e6ff !important; }
     }
 
     tr:hover > td.el-table__cell {
@@ -191,27 +215,53 @@ body {
   }
 }
 
-/* ============ 卡片 ============ */
+/* ============================================================
+ *  3. Loading 遮罩（关键：避免加载表格时闪白）
+ * ============================================================ */
+.el-loading-mask {
+  background-color: rgba(5, 8, 16, 0.7) !important;
+  backdrop-filter: blur(2px);
+  transition: none !important;
+}
+
+.el-loading-spinner .path {
+  stroke: #00f0ff !important;
+}
+
+.el-loading-spinner .el-loading-text {
+  color: #00f0ff !important;
+}
+
+/* 去掉 loading 的过渡动画，避免闪现 */
+.el-loading-fade-enter-active,
+.el-loading-fade-leave-active,
+.el-loading-parent--relative {
+  transition: none !important;
+}
+
+/* ============================================================
+ *  4. 卡片
+ * ============================================================ */
 .el-card {
   background: rgba(20, 28, 48, 0.9) !important;
   border: 1px solid rgba(0, 240, 255, 0.15) !important;
   border-radius: 16px !important;
   color: #e0e6ff;
-  transition: all 0.3s;
-
-  &:hover {
-    border-color: rgba(0, 240, 255, 0.5) !important;
-    box-shadow: 0 8px 30px rgba(0, 240, 255, 0.1);
-  }
 
   .el-card__header {
     border-bottom: 1px solid rgba(0, 240, 255, 0.15);
     color: #e0e6ff;
     font-weight: 600;
   }
+
+  .el-card__body {
+    background: transparent !important;
+  }
 }
 
-/* ============ 输入框 ============ */
+/* ============================================================
+ *  5. 输入框 / 选择器
+ * ============================================================ */
 .el-input__wrapper,
 .el-textarea__inner,
 .el-select__wrapper {
@@ -239,7 +289,9 @@ body {
   }
 }
 
-/* ============ 按钮 ============ */
+/* ============================================================
+ *  6. 按钮
+ * ============================================================ */
 .el-button {
   border-radius: 8px;
   font-weight: 500;
@@ -283,7 +335,9 @@ body {
   }
 }
 
-/* ============ 弹窗 ============ */
+/* ============================================================
+ *  7. 弹窗
+ * ============================================================ */
 .el-dialog {
   background: linear-gradient(135deg, rgba(20, 28, 48, 0.98), rgba(15, 20, 38, 0.98)) !important;
   border: 1px solid rgba(0, 240, 255, 0.5) !important;
@@ -291,7 +345,12 @@ body {
 
   .el-dialog__header {
     border-bottom: 1px solid rgba(0, 240, 255, 0.15);
-    .el-dialog__title { color: #e0e6ff !important; font-weight: 600; }
+
+    .el-dialog__title {
+      color: #e0e6ff !important;
+      font-weight: 600;
+    }
+
     .el-dialog__headerbtn .el-dialog__close {
       color: #8892c4 !important;
       &:hover { color: #00f0ff !important; }
@@ -301,10 +360,34 @@ body {
   .el-dialog__body { color: #e0e6ff !important; }
 }
 
-/* ============ 表单 ============ */
-.el-form-item__label { color: #8892c4 !important; }
+/* ============================================================
+ *  8. 表单
+ * ============================================================ */
+.el-form-item__label {
+  color: #8892c4 !important;
+}
 
-/* ============ 分页 ============ */
+.el-radio__label,
+.el-checkbox__label {
+  color: #c4cce6 !important;
+}
+
+.el-radio__inner,
+.el-checkbox__inner {
+  background: rgba(15, 22, 40, 0.8) !important;
+  border-color: rgba(0, 240, 255, 0.5) !important;
+}
+
+.el-radio__input.is-checked .el-radio__inner,
+.el-checkbox__input.is-checked .el-checkbox__inner {
+  background: #00f0ff !important;
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+}
+
+/* ============================================================
+ *  9. 分页
+ * ============================================================ */
 .el-pagination {
   button, .el-pager li {
     background: rgba(15, 22, 40, 0.8) !important;
@@ -312,7 +395,11 @@ body {
     border: 1px solid rgba(0, 240, 255, 0.15);
     border-radius: 6px;
 
-    &:hover { color: #00f0ff !important; border-color: rgba(0, 240, 255, 0.5); }
+    &:hover {
+      color: #00f0ff !important;
+      border-color: rgba(0, 240, 255, 0.5);
+    }
+
     &.is-active {
       background: linear-gradient(135deg, #00f0ff, #7c4dff) !important;
       color: #fff !important;
@@ -321,7 +408,9 @@ body {
   }
 }
 
-/* ============ 下拉面板 ============ */
+/* ============================================================
+ *  10. 下拉面板
+ * ============================================================ */
 .el-select__popper,
 .el-popper {
   background: rgba(20, 28, 48, 0.98) !important;
@@ -335,34 +424,42 @@ body {
 
 .el-select-dropdown__item {
   color: #c4cce6 !important;
+
   &:hover, &.is-hovering {
     background: rgba(0, 240, 255, 0.1) !important;
     color: #00f0ff !important;
   }
+
   &.is-selected {
     color: #00f0ff !important;
     background: rgba(0, 240, 255, 0.15) !important;
   }
 }
 
-/* ============ 标签 ============ */
+/* ============================================================
+ *  11. 标签
+ * ============================================================ */
 .el-tag {
   border-radius: 6px;
+
   &--info {
     background: rgba(136, 146, 196, 0.15) !important;
     border-color: rgba(136, 146, 196, 0.3) !important;
     color: #8892c4 !important;
   }
+
   &--success {
     background: rgba(0, 255, 157, 0.15) !important;
     border-color: rgba(0, 255, 157, 0.4) !important;
     color: #00ff9d !important;
   }
+
   &--warning {
     background: rgba(255, 170, 51, 0.15) !important;
     border-color: rgba(255, 170, 51, 0.4) !important;
     color: #ffaa33 !important;
   }
+
   &--danger {
     background: rgba(255, 77, 148, 0.15) !important;
     border-color: rgba(255, 77, 148, 0.4) !important;
@@ -370,31 +467,48 @@ body {
   }
 }
 
-/* ============ 消息提示 ============ */
+/* ============================================================
+ *  12. 消息提示
+ * ============================================================ */
 .el-message {
   background: rgba(20, 28, 48, 0.98) !important;
   border: 1px solid rgba(0, 240, 255, 0.5) !important;
+
   .el-message__content { color: #e0e6ff !important; }
 }
 
 .el-message-box {
   background: rgba(20, 28, 48, 0.98) !important;
   border: 1px solid rgba(0, 240, 255, 0.5) !important;
+
   .el-message-box__title { color: #e0e6ff !important; }
   .el-message-box__message { color: #c4cce6 !important; }
 }
 
-/* ============ 描述列表 ============ */
+/* ============================================================
+ *  13. 描述列表
+ * ============================================================ */
 .el-descriptions {
   .el-descriptions__label {
     background: rgba(15, 22, 40, 0.8) !important;
     color: #8892c4 !important;
     border-color: rgba(0, 240, 255, 0.15) !important;
   }
+
   .el-descriptions__content {
     background: rgba(20, 28, 48, 0.5) !important;
     color: #e0e6ff !important;
     border-color: rgba(0, 240, 255, 0.15) !important;
   }
-  .el-descriptions__cell { border-color: rgba(0, 240, 255, 0.15) !important; }
+
+  .el-descriptions__cell {
+    border-color: rgba(0, 240, 255, 0.15) !important;
+  }
+}
+
+/* ============================================================
+ *  14. 空状态
+ * ============================================================ */
+.el-empty__description p {
+  color: #8892c4 !important;
 }

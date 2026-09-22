@@ -1,25 +1,39 @@
 <template>
   <div>
     <!-- 搜索栏 -->
-    <el-card class="search-card">
+   <el-card class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item label="套卷">
-          <el-select v-model="query.source" placeholder="全部套卷" clearable filterable style="width: 220px"
-            @change="loadSources">
-            <el-option v-for="item in sourceDictOptions" :key="item.dictValue" :label="item.dictLabel"
-              :value="item.dictValue" />
-          </el-select>
+          <el-input v-model="query.source" placeholder="输入关键词模糊搜索" clearable style="width: 220px"
+            @keyup.enter="loadSources" @clear="loadSources">
+            <template #prefix>
+              <el-icon>
+                <Search />
+              </el-icon>
+            </template>
+          </el-input>
         </el-form-item>
+
         <el-form-item label="考试">
-          <el-select v-model="query.examType" placeholder="全部" clearable style="width: 140px" @change="loadSources">
-            <el-option v-for="item in examTypeOptions" :key="item.dictValue" :label="item.dictLabel"
+          <el-select v-model="query.examType" placeholder="全部" clearable style="width: 140px"
+            @change="handleQueryExamTypeChange">
+            <el-option v-for="item in examTypeL1Options" :key="item.dictValue" :label="item.dictLabel"
               :value="item.dictValue" />
           </el-select>
         </el-form-item>
+
+        <el-form-item v-if="queryL2Options.length" label="子类">
+          <el-select v-model="query.examSubType" placeholder="全部" clearable style="width: 100px" @change="loadSources">
+            <el-option v-for="item in queryL2Options" :key="item.dictValue" :label="item.dictLabel"
+              :value="item.dictValue" />
+          </el-select>
+        </el-form-item>
+
         <el-form-item>
           <el-button type="primary" @click="loadSources">查询</el-button>
           <el-button @click="resetQuery">重置</el-button>
         </el-form-item>
+
         <el-form-item style="float: right">
           <el-button type="primary" @click="openEdit()">新增题目</el-button>
         </el-form-item>
@@ -38,9 +52,10 @@
                 <el-table-column type="index" width="60" label="序号" align="center" />
                 <el-table-column prop="content" label="题目内容" show-overflow-tooltip />
                 <el-table-column prop="category" label="类型" width="160" />
-                <el-table-column prop="examType" label="考试" width="100" align="center">
+               <el-table-column label="考试" width="140" align="center">
                   <template #default="{ row: q }">
                     {{ examTypeLabel(q.examType) }}
+                    <template v-if="q.examSubType">-{{ q.examSubType }}类</template>
                   </template>
                 </el-table-column>
                 <el-table-column prop="difficulty" label="难度" width="80" align="center" />
@@ -229,12 +244,20 @@
             </div>
           </div>
         </el-form-item>
-
         <el-form-item label="考试类型" prop="examType">
-          <el-select v-model="form.examType" placeholder="请选择考试类型" clearable style="width: 200px">
-            <el-option v-for="item in examTypeOptions" :key="item.dictValue" :label="item.dictLabel"
-              :value="item.dictValue" />
-          </el-select>
+          <div class="category-select-group">
+            <el-select v-model="form.examType" placeholder="考试类型" clearable style="width: 160px"
+              @change="handleExamTypeChange">
+              <el-option v-for="item in examTypeL1Options" :key="item.dictValue" :label="item.dictLabel"
+                :value="item.dictValue" />
+            </el-select>
+
+            <el-select v-if="examTypeL2Options.length" v-model="form.examSubType" placeholder="选择子类" clearable
+              style="width: 120px">
+              <el-option v-for="item in examTypeL2Options" :key="item.dictValue" :label="item.dictLabel"
+                :value="item.dictValue" />
+            </el-select>
+          </div>
         </el-form-item>
 
         <el-form-item label="题目来源" prop="source">
@@ -261,7 +284,10 @@
         <el-descriptions-item label="ID">{{ detail.id }}</el-descriptions-item>
         <el-descriptions-item label="难度">{{ detail.difficulty }}</el-descriptions-item>
         <el-descriptions-item label="题目类型">{{ detail.category }}</el-descriptions-item>
-        <el-descriptions-item label="考试类型">{{ examTypeLabel(detail.examType) }}</el-descriptions-item>
+       <el-descriptions-item label="考试类型">
+          {{ examTypeLabel(detail.examType) }}
+          <template v-if="detail.examSubType">-{{ detail.examSubType }}类</template>
+        </el-descriptions-item>
         <el-descriptions-item label="来源" :span="2">{{ detail.source || '-' }}</el-descriptions-item>
         <el-descriptions-item label="题目内容" :span="2">
           <div style="white-space: pre-wrap">{{ detail.content }}</div>
@@ -314,7 +340,7 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete, Plus, Camera, Files } from '@element-plus/icons-vue'
+import { Delete, Plus, Camera, Files, Search } from '@element-plus/icons-vue'
 import {
   saveQuestion,
   updateQuestion,
@@ -335,7 +361,8 @@ const sourceList = ref([])
 const sourceTableRef = ref()
 const query = reactive({
   source: '',
-  examType: ''
+  examType: '',
+  examSubType: ''
 })
 
 const detailVisible = ref(false)
@@ -353,13 +380,41 @@ const categoryLoaded = ref(false)
 const examTypeOptions = ref([])
 const sourceDictOptions = ref([])
 const platformOptions = ref([])
+const examTypeL1Options = ref([])
+const examTypeL2Options = ref([])
+const examTypeTree = ref([])
+const queryL2Options = ref([])  
 
 const loadPlatformOptions = async () => {
   platformOptions.value = await listDict('analysis_platform')
 }
 
 const loadExamTypeOptions = async () => {
-  examTypeOptions.value = await listDict('exam_type')
+  const tree = await treeDict('exam_type')
+  examTypeTree.value = tree || []
+  examTypeL1Options.value = tree || []
+
+  // 同时生成扁平列表供列表标签显示
+  const flat = []
+  const walk = (arr) => {
+    arr.forEach(item => {
+      flat.push({ dictValue: item.dictValue, dictLabel: item.dictLabel })
+      if (item.children) walk(item.children)
+    })
+  }
+  walk(tree || [])
+  examTypeOptions.value = flat
+}
+
+/** 考试类型一级变化 → 加载二级 */
+const handleExamTypeChange = (val) => {
+  form.examSubType = ''
+  if (!val) {
+    examTypeL2Options.value = []
+    return
+  }
+  const node = examTypeTree.value.find(n => n.dictValue === val)
+  examTypeL2Options.value = node?.children || []
 }
 
 const loadSourceDict = async () => {
@@ -380,6 +435,18 @@ const loadCategoryOptions = async () => {
   return tree
 }
 
+const handleQueryExamTypeChange = (val) => {
+  query.examSubType = ''
+  if (!val) {
+    queryL2Options.value = []
+    loadSources()
+    return
+  }
+  const node = examTypeTree.value.find(n => n.dictValue === val)
+  queryL2Options.value = node?.children || []
+  loadSources()
+}
+
 const platformLabel = (val) => {
   const item = platformOptions.value.find(o => o.dictValue === val)
   return item ? item.dictLabel : (val || '-')
@@ -389,25 +456,40 @@ const platformLabel = (val) => {
 const loadSources = async () => {
   loading.value = true
   try {
+    // ★ 后端过滤
+    const stats = await listQuestionSources({
+      examType: query.examType || undefined,
+      examSubType: query.examSubType || undefined,
+      keyword: query.source || undefined
+    })
+
+    const statMap = new Map((stats || []).map(s => [s.source, s]))
+
+    // 字典里配置的套卷
     const dictList = sourceDictOptions.value.length
       ? sourceDictOptions.value
       : await listDict('question_source')
 
-    const stats = await listQuestionSources()
-    const statMap = new Map((stats || []).map(s => [s.source, s.count]))
-
     const merged = []
     const seen = new Set()
+
     dictList.forEach(d => {
+      const stat = statMap.get(d.dictValue)
+      // ★ 关键：如果后端返回的统计里没有这个套卷（不匹配过滤条件），跳过
+      if (!stat) return
+
       merged.push({
         rowKey: d.dictValue,
         source: d.dictValue,
         label: d.dictLabel,
-        count: statMap.get(d.dictValue) || 0
+        count: stat.count,
+        examType: stat.examType,
+        examSubType: stat.examSubType
       })
       seen.add(d.dictValue)
     })
 
+    // 库里有但字典没有的
     ;(stats || []).forEach(s => {
       if (!seen.has(s.source)) {
         const key = s.source || '__unclassified__'
@@ -415,19 +497,17 @@ const loadSources = async () => {
           rowKey: key,
           source: s.source || '',
           label: s.source || '未分类',
-          count: s.count
+          count: s.count,
+          examType: s.examType || '',
+          examSubType: s.examSubType || ''
         })
         seen.add(s.source)
       }
     })
 
-    let filtered = merged
-    if (query.source) {
-      filtered = filtered.filter(s => s.source === query.source)
-    }
-
+    // 保留展开状态
     const oldMap = new Map(sourceList.value.map(s => [s.rowKey, s]))
-    sourceList.value = filtered.map(s => {
+    sourceList.value = merged.map(s => {
       const old = oldMap.get(s.rowKey)
       if (old && old.expanded) {
         return { ...s, questions: old.questions, loading: false, expanded: true }
@@ -438,7 +518,6 @@ const loadSources = async () => {
     loading.value = false
   }
 }
-
 const handleRowClick = (row) => {
   toggleExpand(row)
 }
@@ -495,6 +574,8 @@ const addQuestionToSource = async (source) => {
 const resetQuery = () => {
   query.source = ''
   query.examType = ''
+  query.examSubType = ''
+  queryL2Options.value = []
   loadSources()
 }
 
@@ -510,6 +591,7 @@ const form = reactive({
   categoryL1: '',
   categoryL2: '',
   examType: '',
+  examSubType: '',
   source: '',
   difficulty: 1,
   imageUrl: '',
@@ -533,7 +615,8 @@ const openEdit = async (row, defaultSource = '') => {
     const labels = (data.category || '').split('/').filter(Boolean)
     const l1 = categoryTree.value.find(n => n.dictLabel === labels[0])
     const l2 = (l1?.children || []).find(n => n.dictLabel === labels[1])
-
+    const l1Node = examTypeTree.value.find(n => n.dictValue === data.examType)
+    examTypeL2Options.value = l1Node?.children || []
     Object.assign(form, {
       ...data,
       options: JSON.parse(JSON.stringify(data.options || [])).map(o => ({
@@ -544,6 +627,7 @@ const openEdit = async (row, defaultSource = '') => {
       categoryL1: l1?.dictValue || '',
       categoryL2: l2?.dictValue || '',
       examType: data.examType || '',
+      examSubType: data.examSubType || '',
       analyses: (data.analyses || []).map(a => ({
         platform: a.platform,
         type: a.type || 'text',           // ★ 回填 type
@@ -567,6 +651,7 @@ const openEdit = async (row, defaultSource = '') => {
       categoryL1: '',
       categoryL2: '',
       examType: '',
+      examSubType: '', 
       source: defaultSource,
       difficulty: 1,
       imageUrl: '',
@@ -585,9 +670,12 @@ const addOption = () => {
   form.options.push({ key: nextKey, type: 'text', value: '' })
 }
 
-// ★ 加 type
 const addAnalysis = () => {
-  form.analyses.push({ platform: '', type: 'text', content: '' })
+  form.analyses.push({
+    platform: platformOptions.value[0]?.dictValue || '',   // ★ 默认第一个
+    type: 'text',
+    content: ''
+  })
 }
 
 // ==================== 类型联动 ====================

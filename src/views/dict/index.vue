@@ -19,7 +19,7 @@
               :value="t.dictType"
             >
               <span>{{ typeLabel(t.dictType) }}</span>
-              <span style="float: right; color: #999">{{ t.count }}</span>
+              <span style="float: right; color: #8892c4">{{ t.count }}</span>
             </el-option>
           </el-select>
         </el-form-item>
@@ -51,18 +51,20 @@
     <!-- 分组树形列表 -->
     <el-card class="table-card">
       <el-table
+        ref="tableRef"
+        class="dict-table"
         :data="treeData"
         v-loading="loading"
         row-key="rowKey"
         :tree-props="{ children: 'children' }"
-        default-expand-all
-        :indent="20"
+        :indent="12"
+        @expand-change="handleExpandChange"
       >
         <el-table-column label="名称" min-width="260">
           <template #default="{ row }">
             <!-- 分组节点 -->
             <template v-if="row.isGroup">
-              <div class="group-cell">
+              <div class="name-cell">
                 <el-icon class="group-icon"><FolderOpened /></el-icon>
                 <span class="group-name">{{ typeLabel(row.dictType) }}</span>
                 <el-tag size="small" type="info" effect="plain">{{ row.dictType }}</el-tag>
@@ -71,16 +73,17 @@
             </template>
             <!-- 字典项 -->
             <template v-else>
-              <span class="dict-label">{{ row.dictLabel }}</span>
-              <el-tag
-                size="small"
-                :type="row.level === 1 ? 'primary' : 'info'"
-                effect="plain"
-                style="margin-left: 8px"
-              >L{{ row.level }}</el-tag>
-              <el-tag v-if="row.status !== 1" size="small" type="danger" effect="plain" style="margin-left: 6px">
-                已禁用
-              </el-tag>
+              <div class="name-cell">
+                <span class="dict-label">{{ row.dictLabel }}</span>
+                <el-tag
+                  size="small"
+                  effect="plain"
+                  :class="row.level === 1 ? 'level-tag-l1' : 'level-tag-l2'"
+                >L{{ row.level }}</el-tag>
+                <el-tag v-if="row.status !== 1" size="small" type="danger" effect="plain">
+                  已禁用
+                </el-tag>
+              </div>
             </template>
           </template>
         </el-table-column>
@@ -109,28 +112,40 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="220" align="center" fixed="right">
+        <el-table-column label="操作" width="280" align="center" fixed="right">
           <template #default="{ row }">
-            <!-- 分组节点：只提供"在此分组下新增" -->
             <template v-if="row.isGroup">
-              <el-button link type="primary" size="small" @click="openAddInGroup(row.dictType)">
+              <el-button link type="primary" size="small" @click.stop="toggleExpand(row)">
+                {{ isExpanded(row) ? '收起' : '展开' }}
+              </el-button>
+              <el-divider direction="vertical" />
+              <el-button link type="primary" size="small" @click.stop="openAddInGroup(row.dictType)">
                 新增字典项
               </el-button>
             </template>
-            <!-- 字典项 -->
             <template v-else>
-              <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
+              <el-button
+                v-if="row.children && row.children.length"
+                link
+                type="primary"
+                size="small"
+                @click.stop="toggleExpand(row)"
+              >
+                {{ isExpanded(row) ? '收起' : '展开' }}
+              </el-button>
+              <el-divider v-if="row.children && row.children.length" direction="vertical" />
+              <el-button link type="primary" size="small" @click.stop="openEdit(row)">编辑</el-button>
               <el-divider direction="vertical" />
-              <el-button link type="primary" size="small" @click="openAddChild(row)">新增子项</el-button>
+              <el-button link type="primary" size="small" @click.stop="openAddChild(row)">新增子项</el-button>
               <el-divider direction="vertical" />
-              <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+              <el-button link type="danger" size="small" @click.stop="handleDelete(row)">删除</el-button>
             </template>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
-    <!-- 新增/编辑弹窗（和之前一样） -->
+    <!-- 新增/编辑弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       :title="form.id ? '编辑字典' : '新增字典'"
@@ -209,7 +224,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { FolderOpened } from '@element-plus/icons-vue'
 import {
@@ -224,15 +239,20 @@ import {
 const TYPE_LABELS = {
   question_category: '题目类型',
   exam_type: '考试类型',
-  question_source: '套卷来源'
+  question_source: '套卷来源',
+  analysis_platform: '解析平台'
 }
 const typeLabel = (t) => TYPE_LABELS[t] || t
 
 // ==================== 状态 ====================
 const loading = ref(false)
-const allData = ref([])     // 全量字典
-const treeData = ref([])    // 按 dictType 分组后的树形
+const allData = ref([])
+const treeData = ref([])
 const typeList = ref([])
+const tableRef = ref()
+
+// ★ 用独立 Set 记录展开状态，避免与 Element Plus 内部字段冲突
+const expandedKeys = ref(new Set())
 
 const query = reactive({
   dictType: '',
@@ -260,13 +280,50 @@ const rules = {
   dictValue: [{ required: true, message: '请输入存储值', trigger: 'blur' }]
 }
 
-// 可选父节点：当前表单 dictType 下的条目
 const parentCandidates = computed(() => {
   if (!form.dictType) return []
   return allData.value.filter(d =>
     d.dictType === form.dictType && d.id !== form.id
   )
 })
+
+// ==================== 展开/收起 ====================
+/** 判断某行是否展开 */
+const isExpanded = (row) => expandedKeys.value.has(row.rowKey)
+
+/** 展开/收起单行 */
+const toggleExpand = (row) => {
+  const table = tableRef.value
+  if (!table) return
+  const willExpand = !expandedKeys.value.has(row.rowKey)
+  table.toggleRowExpansion(row, willExpand)
+}
+
+/** 同步展开状态（不写 row.expanded） */
+const handleExpandChange = (row, expanded) => {
+  const isExp = Array.isArray(expanded) ? expanded.includes(row) : !!expanded
+  const newSet = new Set(expandedKeys.value)
+  if (isExp) {
+    newSet.add(row.rowKey)
+  } else {
+    newSet.delete(row.rowKey)
+  }
+  expandedKeys.value = newSet
+}
+
+/** 初始只展开分组 */
+const expandAllGroups = () => {
+  const table = tableRef.value
+  if (!table) return
+  const newSet = new Set()
+  treeData.value.forEach(row => {
+    if (row.isGroup) {
+      table.toggleRowExpansion(row, true)
+      newSet.add(row.rowKey)
+    }
+  })
+  expandedKeys.value = newSet
+}
 
 // ==================== 加载 ====================
 const loadTypes = async () => {
@@ -276,16 +333,32 @@ const loadTypes = async () => {
 const loadAll = async () => {
   loading.value = true
   try {
-    allData.value = await adminListAllDict()
+    expandedKeys.value = new Set()
+    const raw = await adminListAllDict()
+
+    // ★ 清洗数据
+    allData.value = (raw || []).map(d => {
+      const item = {
+        ...d,
+        rowKey: `dict-${d.id}`          // 1. 加唯一 rowKey
+      }
+      // 2. 删掉空 children（避免 Element Plus 显示无用的箭头）
+      if (Array.isArray(item.children) && item.children.length === 0) {
+        delete item.children
+      }
+      return item
+    })
+
     renderTree()
+    await nextTick()
+    expandAllGroups()
   } finally {
     loading.value = false
   }
 }
-
 // ==================== 构造分组树 ====================
 const renderTree = () => {
-  // 1. 过滤
+  // 过滤
   let filtered = allData.value
   if (query.dictType) {
     filtered = filtered.filter(d => d.dictType === query.dictType)
@@ -295,7 +368,6 @@ const renderTree = () => {
   }
   if (query.keyword) {
     const kw = query.keyword.toLowerCase()
-    // 关键词过滤时，如果父节点命中，子节点也保留
     const hitIds = new Set()
     filtered.forEach(d => {
       if (
@@ -305,7 +377,6 @@ const renderTree = () => {
         hitIds.add(d.id)
       }
     })
-    // 收集命中节点的所有祖先
     const idMap = new Map(filtered.map(d => [d.id, d]))
     const withAncestors = new Set(hitIds)
     hitIds.forEach(id => {
@@ -318,27 +389,30 @@ const renderTree = () => {
     filtered = filtered.filter(d => withAncestors.has(d.id))
   }
 
-  // 2. 按 dictType 分组
+  // 按 dictType 分组
   const groups = new Map()
   filtered.forEach(d => {
     if (!groups.has(d.dictType)) groups.set(d.dictType, [])
-    groups.get(d.dictType).push({ ...d, children: [] })
+    groups.get(d.dictType).push({ ...d })
   })
 
-  // 3. 每组内部按 parentId 组装树
   const roots = []
   groups.forEach((items, dictType) => {
     const idMap = new Map(items.map(i => [i.id, i]))
-    const groupChildren = []
+
+    // ★ 只有真正有子项时才创建 children 数组
     items.forEach(i => {
       if (i.parentId && i.parentId > 0 && idMap.has(i.parentId)) {
-        idMap.get(i.parentId).children.push(i)
-      } else {
-        groupChildren.push(i)
+        const parent = idMap.get(i.parentId)
+        if (!parent.children) parent.children = []
+        parent.children.push(i)
       }
     })
 
-    // 排序：sort 升序
+    const groupChildren = items.filter(
+      i => !i.parentId || i.parentId === 0 || !idMap.has(i.parentId)
+    )
+
     const sortRecursive = (arr) => {
       arr.sort((a, b) => (a.sort || 0) - (b.sort || 0))
       arr.forEach(x => x.children && sortRecursive(x.children))
@@ -353,9 +427,7 @@ const renderTree = () => {
     })
   })
 
-  // 4. 分组按字典类型名排序
   roots.sort((a, b) => a.dictType.localeCompare(b.dictType))
-
   treeData.value = roots
 }
 
@@ -365,6 +437,7 @@ const resetQuery = () => {
   query.keyword = ''
   query.status = null
   renderTree()
+  nextTick(() => expandAllGroups())
 }
 
 // ==================== 表单 ====================
@@ -397,7 +470,6 @@ const openEdit = (row) => {
   dialogVisible.value = true
 }
 
-// 从分组节点点"新增字典项"
 const openAddInGroup = (dictType) => {
   Object.assign(form, {
     id: null,
@@ -413,7 +485,6 @@ const openAddInGroup = (dictType) => {
   dialogVisible.value = true
 }
 
-// 从字典项点"新增子项"
 const openAddChild = (row) => {
   Object.assign(form, {
     id: null,
@@ -464,36 +535,150 @@ onMounted(async () => {
 <style scoped>
 .search-card { margin-bottom: 16px; }
 .table-card { padding: 0; }
+
 .form-tip {
   font-size: 12px;
-  color: #999;
+  color: #8892c4;
   line-height: 1.5;
   margin-top: 4px;
 }
 
-/* 分组行 */
-.group-cell {
-  display: flex;
+/* ============ 名称单元格 ============ */
+.name-cell {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
-}
-.group-icon {
-  color: #e6a23c;
-  font-size: 18px;
-}
-.group-name {
-  color: #303133;
-  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-/* 字典项 */
+.group-icon {
+  color: #ffaa33;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.group-name {
+  color: #e0e6ff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .dict-label {
   font-weight: 500;
-  color: #303133;
+  color: #e0e6ff;
 }
+
 .dict-value {
-  color: #606266;
+  color: #c4cce6;
   font-family: Consolas, Monaco, monospace;
+}
+
+/* ============ ★ L1 / L2 标签颜色 ============ */
+:deep(.level-tag-l1) {
+  background: rgba(0, 240, 255, 0.15) !important;
+  border-color: rgba(0, 240, 255, 0.5) !important;
+  color: #00f0ff !important;
+  font-weight: 600;
+}
+
+:deep(.level-tag-l2) {
+  background: rgba(124, 77, 255, 0.15) !important;
+  border-color: rgba(124, 77, 255, 0.5) !important;
+  color: #a78bfa !important;
+  font-weight: 600;
+}
+
+/* ============ ★ 箭头 + 名称 水平对齐 ============ */
+:deep(.dict-table .el-table__body .el-table__cell:first-child .cell),
+:deep(.dict-table .el-table__header .el-table__cell:first-child .cell) {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+}
+
+:deep(.dict-table .el-table__indent) {
+  padding-left: 12px !important;
+  flex-shrink: 0 !important;
+  box-sizing: content-box;
+}
+
+:deep(.dict-table .el-table__expand-icon) {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  color: #5a6288 !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.2s, color 0.2s;
+}
+
+:deep(.dict-table .el-table__expand-icon:hover) {
+  color: #00f0ff !important;
+}
+
+:deep(.dict-table .el-table__expand-icon svg) {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+:deep(.dict-table .el-table__expand-icon--expanded) {
+  transform: rotate(90deg);
+}
+
+/* ============ 深色主题 ============ */
+:deep(.el-table) {
+  background: transparent !important;
+  --el-table-bg-color: transparent !important;
+  --el-table-tr-bg-color: transparent !important;
+  --el-table-header-bg-color: rgba(15, 22, 40, 0.95) !important;
+  --el-table-header-text-color: #e0e6ff !important;
+  --el-table-text-color: #e0e6ff !important;
+  --el-table-border-color: rgba(0, 240, 255, 0.12) !important;
+  --el-table-row-hover-bg-color: rgba(0, 240, 255, 0.1) !important;
+  --el-table-current-row-bg-color: rgba(0, 240, 255, 0.12) !important;
+}
+
+:deep(.el-table tr) {
+  background: transparent !important;
+}
+
+:deep(.el-table th.el-table__cell) {
+  background: rgba(15, 22, 40, 0.95) !important;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.15) !important;
+}
+
+:deep(.el-table th.el-table__cell),
+:deep(.el-table th.el-table__cell .cell),
+:deep(.el-table th.el-table__cell *) {
+  color: #c4cce6 !important;
+}
+
+:deep(.el-table td.el-table__cell) {
+  background: rgba(20, 28, 48, 0.5) !important;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.08) !important;
+}
+
+:deep(.el-table td.el-table__cell),
+:deep(.el-table td.el-table__cell .cell),
+:deep(.el-table td.el-table__cell .cell *),
+:deep(.el-table td.el-table__cell span) {
+  color: #e0e6ff !important;
+}
+
+:deep(.el-table__body tr:hover > td.el-table__cell) {
+  background: rgba(0, 240, 255, 0.1) !important;
+}
+
+:deep(.el-table::before),
+:deep(.el-table::after) {
+  display: none !important;
+}
+
+:deep(.el-table__expanded-cell) {
+  background: rgba(10, 15, 30, 0.7) !important;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.15) !important;
 }
 </style>
