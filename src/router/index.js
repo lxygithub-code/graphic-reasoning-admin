@@ -31,6 +31,11 @@ const routes = [
         path: 'question',
         component: () => import('@/views/question/index.vue'),
         meta: { title: '题库管理' }
+      },
+      {
+        path: 'profile',
+        component: () => import('@/views/profile/index.vue'),
+        meta: { title: '个人设置' }
       }
     ]
   }

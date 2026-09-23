@@ -227,23 +227,20 @@
           </div>
         </el-form-item>
 
+        <!-- ★ 题目类型：改为级联选择器，支持任意层级 -->
         <el-form-item label="题目类型" prop="category">
-          <div class="form-block">
-            <div class="category-select-group">
-              <el-select v-model="form.categoryL1" placeholder="一级分类" clearable style="width: 160px"
-                @change="handleL1Change">
-                <el-option v-for="item in categoryL1Options" :key="item.dictValue" :label="item.dictLabel"
-                  :value="item.dictValue" />
-              </el-select>
-
-              <el-select v-model="form.categoryL2" placeholder="二级分类" clearable style="width: 160px"
-                :disabled="!form.categoryL1" @change="handleL2Change">
-                <el-option v-for="item in formCategoryL2Options" :key="item.dictValue" :label="item.dictLabel"
-                  :value="item.dictValue" />
-              </el-select>
-            </div>
-          </div>
+          <el-cascader
+            v-model="form.categoryPath"
+            :options="categoryTree"
+            :props="cascaderProps"
+            placeholder="请选择题目类型（可任选一级）"
+            clearable
+            filterable
+            style="width: 100%"
+            @change="handleCategoryChange"
+          />
         </el-form-item>
+
         <el-form-item label="考试类型" prop="examType">
           <div class="category-select-group">
             <el-select v-model="form.examType" placeholder="考试类型" clearable style="width: 160px"
@@ -375,7 +372,6 @@ const detail = ref({
 // ==================== 字典 ====================
 const categoryTree = ref([])
 const categoryL1Options = ref([])
-const formCategoryL2Options = ref([])
 const categoryLoaded = ref(false)
 const examTypeOptions = ref([])
 const sourceDictOptions = ref([])
@@ -383,7 +379,16 @@ const platformOptions = ref([])
 const examTypeL1Options = ref([])
 const examTypeL2Options = ref([])
 const examTypeTree = ref([])
-const queryL2Options = ref([])  
+const queryL2Options = ref([])
+
+// ★ 级联选择器配置：允许选任意层级，返回完整路径数组
+const cascaderProps = {
+  value: 'dictValue',
+  label: 'dictLabel',
+  children: 'children',
+  checkStrictly: true,
+  emitPath: true
+}
 
 const loadPlatformOptions = async () => {
   platformOptions.value = await listDict('analysis_platform')
@@ -394,7 +399,6 @@ const loadExamTypeOptions = async () => {
   examTypeTree.value = tree || []
   examTypeL1Options.value = tree || []
 
-  // 同时生成扁平列表供列表标签显示
   const flat = []
   const walk = (arr) => {
     arr.forEach(item => {
@@ -456,7 +460,6 @@ const platformLabel = (val) => {
 const loadSources = async () => {
   loading.value = true
   try {
-    // ★ 后端过滤
     const stats = await listQuestionSources({
       examType: query.examType || undefined,
       examSubType: query.examSubType || undefined,
@@ -465,7 +468,6 @@ const loadSources = async () => {
 
     const statMap = new Map((stats || []).map(s => [s.source, s]))
 
-    // 字典里配置的套卷
     const dictList = sourceDictOptions.value.length
       ? sourceDictOptions.value
       : await listDict('question_source')
@@ -475,7 +477,6 @@ const loadSources = async () => {
 
     dictList.forEach(d => {
       const stat = statMap.get(d.dictValue)
-      // ★ 关键：如果后端返回的统计里没有这个套卷（不匹配过滤条件），跳过
       if (!stat) return
 
       merged.push({
@@ -489,7 +490,6 @@ const loadSources = async () => {
       seen.add(d.dictValue)
     })
 
-    // 库里有但字典没有的
     ;(stats || []).forEach(s => {
       if (!seen.has(s.source)) {
         const key = s.source || '__unclassified__'
@@ -505,7 +505,6 @@ const loadSources = async () => {
       }
     })
 
-    // 保留展开状态
     const oldMap = new Map(sourceList.value.map(s => [s.rowKey, s]))
     sourceList.value = merged.map(s => {
       const old = oldMap.get(s.rowKey)
@@ -588,8 +587,7 @@ const form = reactive({
   options: [],
   correctOption: '',
   category: '',
-  categoryL1: '',
-  categoryL2: '',
+  categoryPath: [],
   examType: '',
   examSubType: '',
   source: '',
@@ -605,6 +603,42 @@ const rules = {
   source: [{ required: true, message: '请选择套卷', trigger: 'change' }]
 }
 
+/** 级联选择变化 → 把路径 label 拼成 category 文本 */
+const handleCategoryChange = (path) => {
+  if (!path || !path.length) {
+    form.category = ''
+    return
+  }
+  const labels = []
+  let nodes = categoryTree.value
+  for (const val of path) {
+    const node = nodes.find(n => n.dictValue === val)
+    if (node) {
+      labels.push(node.dictLabel)
+      nodes = node.children || []
+    }
+  }
+  form.category = labels.join('/')
+}
+
+/** 从 category 文本反查路径（编辑回显用） */
+const buildCategoryPath = (categoryText) => {
+  if (!categoryText) return []
+  const labels = categoryText.split('/').filter(Boolean)
+  const path = []
+  let nodes = categoryTree.value
+  for (const label of labels) {
+    const node = nodes.find(n => n.dictLabel === label)
+    if (node) {
+      path.push(node.dictValue)
+      nodes = node.children || []
+    } else {
+      break
+    }
+  }
+  return path
+}
+
 const openEdit = async (row, defaultSource = '') => {
   await loadCategoryOptions()
   if (!examTypeOptions.value.length) await loadExamTypeOptions()
@@ -612,11 +646,6 @@ const openEdit = async (row, defaultSource = '') => {
 
   if (row) {
     const data = await getQuestionDetail(row.id)
-    const labels = (data.category || '').split('/').filter(Boolean)
-    const l1 = categoryTree.value.find(n => n.dictLabel === labels[0])
-    const l2 = (l1?.children || []).find(n => n.dictLabel === labels[1])
-    const l1Node = examTypeTree.value.find(n => n.dictValue === data.examType)
-    examTypeL2Options.value = l1Node?.children || []
     Object.assign(form, {
       ...data,
       options: JSON.parse(JSON.stringify(data.options || [])).map(o => ({
@@ -624,18 +653,15 @@ const openEdit = async (row, defaultSource = '') => {
         type: o.type || 'text',
         value: o.value
       })),
-      categoryL1: l1?.dictValue || '',
-      categoryL2: l2?.dictValue || '',
+      categoryPath: buildCategoryPath(data.category),
       examType: data.examType || '',
       examSubType: data.examSubType || '',
       analyses: (data.analyses || []).map(a => ({
         platform: a.platform,
-        type: a.type || 'text',           // ★ 回填 type
+        type: a.type || 'text',
         content: a.content
       }))
     })
-
-    formCategoryL2Options.value = l1?.children || []
   } else {
     Object.assign(form, {
       id: null,
@@ -648,17 +674,15 @@ const openEdit = async (row, defaultSource = '') => {
       ],
       correctOption: '',
       category: '',
-      categoryL1: '',
-      categoryL2: '',
+      categoryPath: [],
       examType: '',
-      examSubType: '', 
+      examSubType: '',
       source: defaultSource,
       difficulty: 1,
       imageUrl: '',
       analysis: '',
       analyses: []
     })
-    formCategoryL2Options.value = []
   }
 
   dialogVisible.value = true
@@ -672,34 +696,10 @@ const addOption = () => {
 
 const addAnalysis = () => {
   form.analyses.push({
-    platform: platformOptions.value[0]?.dictValue || '',   // ★ 默认第一个
+    platform: platformOptions.value[0]?.dictValue || '',
     type: 'text',
     content: ''
   })
-}
-
-// ==================== 类型联动 ====================
-const handleL1Change = (val) => {
-  form.categoryL2 = ''
-  if (!val) {
-    formCategoryL2Options.value = []
-    form.category = ''
-    return
-  }
-  const node = categoryTree.value.find(n => n.dictValue === val)
-  formCategoryL2Options.value = node ? node.children || [] : []
-  syncFormCategoryText()
-}
-
-const handleL2Change = () => syncFormCategoryText()
-
-const syncFormCategoryText = () => {
-  const l1 = categoryL1Options.value.find(n => n.dictValue === form.categoryL1)
-  const l2 = formCategoryL2Options.value.find(n => n.dictValue === form.categoryL2)
-  const labels = []
-  if (l1) labels.push(l1.dictLabel)
-  if (l2) labels.push(l2.dictLabel)
-  form.category = labels.join('/')
 }
 
 // ==================== 图片上传 ====================
@@ -726,7 +726,7 @@ const handleUpload = async ({ file }) => {
 }
 
 // ★ 截图上传：记录目标位置
-const screenshotTarget = ref(null)   // { type: 'question'|'option'|'analysis', index: number }
+const screenshotTarget = ref(null)
 
 const handleScreenshot = (type, index = 0) => {
   screenshotTarget.value = { type, index }
@@ -809,7 +809,6 @@ const handleOptionUpload = async (file, opt) => {
   ElMessage.success('上传成功')
 }
 
-// ★ 新增：解析图片上传
 const handleAnalysisUpload = async (file, item) => {
   const url = await uploadImage(file)
   item.content = url
@@ -820,7 +819,11 @@ const handleAnalysisUpload = async (file, item) => {
 // ==================== 提交 ====================
 const handleSubmit = async () => {
   await formRef.value.validate()
-  syncFormCategoryText()
+
+  if (!form.category) {
+    ElMessage.error('请选择题目类型')
+    return
+  }
 
   const currentSource = form.source
 

@@ -22,3 +22,12 @@ export function deleteUser(id) {
     method: 'delete'
   })
 }
+
+/** 更新用户权限 */
+export function updateUserPermission(id, data) {
+  return request({
+    url: `/admin/user/${id}/permission`,
+    method: 'put',
+    params: data
+  })
+}

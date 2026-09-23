@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { login, getCurrentUser, logout } from '@/api/auth'
+import { login, getCurrentUser, updateProfile, changePassword, logout } from '@/api/auth'
 import { setToken, removeToken } from '@/utils/auth'
 
 export const useUserStore = defineStore('user', {
@@ -15,11 +15,23 @@ export const useUserStore = defineStore('user', {
       return data
     },
     async fetchUserInfo() {
-      this.userInfo = await getCurrentUser()
-      return this.userInfo
+      const info = await getCurrentUser()
+      this.userInfo = info
+      return info
+    },
+    async updateProfile(form) {
+      await updateProfile(form)
+      await this.fetchUserInfo()
+    },
+    async changePassword(form) {
+      await changePassword(form)
     },
     async logout() {
-      try { await logout() } catch (e) {}
+      try {
+        await logout()
+      } catch (e) {
+        // 即使接口失败也继续本地清理
+      }
       this.token = ''
       this.userInfo = {}
       removeToken()

@@ -22,6 +22,21 @@
             />
           </template>
         </el-table-column>
+       <el-table-column label="评论权限" width="120" align="center">
+          <template #default="{ row }">
+            <el-switch :model-value="row.canComment === 1"
+              @change="val => handlePermissionChange(row, 'canComment', val ? 1 : 0)" active-color="#00f0ff"
+              inactive-color="#5a6288" />
+          </template>
+        </el-table-column>
+
+        <el-table-column label="展示评论" width="120" align="center">
+          <template #default="{ row }">
+            <el-switch :model-value="row.showComment === 1"
+              @change="val => handlePermissionChange(row, 'showComment', val ? 1 : 0)" active-color="#00f0ff"
+              inactive-color="#5a6288" />
+          </template>
+        </el-table-column>
         <el-table-column prop="lastLoginTime" label="最近登录" width="180" />
         <el-table-column prop="createTime" label="注册时间" width="180" />
         <el-table-column label="操作" width="100" fixed="right">
@@ -47,7 +62,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { pageUser, updateUserStatus, deleteUser } from '@/api/user'
+import { pageUser, updateUserStatus, deleteUser, updateUserPermission } from '@/api/user'
 
 const loading = ref(false)
 const list = ref([])
@@ -64,10 +79,22 @@ const loadData = async () => {
     loading.value = false
   }
 }
+/** 通用权限变更 */
+const handlePermissionChange = async (row, field, value) => {
+  try {
+    await updateUserPermission(row.id, { [field]: value })
+    row[field] = value
+    ElMessage.success('已更新')
+  } catch (e) {
+    // 失败时回滚显示
+    ElMessage.error('更新失败')
+  }
+}
 
+/** 原来的 handleStatus 也改成这个逻辑 */
 const handleStatus = async (row, val) => {
   const status = val ? 1 : 0
-  await updateUserStatus(row.id, status)
+  await updateUserPermission(row.id, { status })
   row.status = status
   ElMessage.success('状态已更新')
 }
@@ -81,3 +108,11 @@ const handleDelete = async (row) => {
 
 onMounted(loadData)
 </script>
+
+<style scoped>
+:deep(.el-switch.is-checked .el-switch__core) {
+  background-color: #00f0ff !important;
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+}
+</style>

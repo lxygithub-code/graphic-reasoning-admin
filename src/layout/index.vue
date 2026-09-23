@@ -31,17 +31,23 @@
           <span class="title-bar"></span>
           <span>{{ $route.meta.title }}</span>
         </div>
-        <el-dropdown @command="handleCommand">
+       <el-dropdown @command="handleCommand">
           <span class="user-info">
-            <div class="avatar">
+            <!-- 优先显示头像图片，没有则显示昵称首字 -->
+            <img v-if="userStore.userInfo.avatar" :src="userStore.userInfo.avatar" class="avatar-img" alt="用户头像" />
+            <div v-else class="avatar">
               {{ (userStore.userInfo.nickname || '管')[0] }}
             </div>
             <span>{{ userStore.userInfo.nickname || '管理员' }}</span>
-            <el-icon><ArrowDown /></el-icon>
+            <el-icon>
+              <ArrowDown />
+            </el-icon>
           </span>
           <template #dropdown>
+            <!-- 下拉菜单内容保持不变 -->
             <el-dropdown-menu>
-              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+              <el-dropdown-item command="profile">个人设置</el-dropdown-item>
+              <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -71,9 +77,12 @@ onMounted(async () => {
 })
 
 const handleCommand = async (cmd) => {
-  if (cmd === 'logout') {
+  if (cmd === 'profile') {
+    router.push('/profile')
+  } else if (cmd === 'logout') {
     await ElMessageBox.confirm('确定退出登录吗？', '提示')
     await userStore.logout()
+    ElMessage.success('已退出登录')
     router.push('/login')
   }
 }
@@ -230,5 +239,31 @@ const handleCommand = async (cmd) => {
   background: transparent;
   padding: 20px;
   overflow-y: auto;
+}
+
+/* 新增的图片头像样式 */
+.avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(0, 240, 255, 0.5); 
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+  display: block;
+}
+
+/* 保留原来的文字头像样式作为备用 */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00f0ff, #7c4dff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
 }
 </style>

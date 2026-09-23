@@ -75,11 +75,8 @@
             <template v-else>
               <div class="name-cell">
                 <span class="dict-label">{{ row.dictLabel }}</span>
-                <el-tag
-                  size="small"
-                  effect="plain"
-                  :class="row.level === 1 ? 'level-tag-l1' : 'level-tag-l2'"
-                >L{{ row.level }}</el-tag>
+                <el-tag size="small" effect="plain" :class="'level-tag-l' + Math.min(row.level || 1, 4)">L{{ row.level
+                  }}</el-tag>
                 <el-tag v-if="row.status !== 1" size="small" type="danger" effect="plain">
                   已禁用
                 </el-tag>
@@ -91,18 +88,6 @@
         <el-table-column label="存储值" min-width="180">
           <template #default="{ row }">
             <span v-if="!row.isGroup" class="dict-value">{{ row.dictValue }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="父ID" width="80" align="center">
-          <template #default="{ row }">
-            <span v-if="!row.isGroup">{{ row.parentId || 0 }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="排序" width="80" align="center">
-          <template #default="{ row }">
-            <span v-if="!row.isGroup">{{ row.sort }}</span>
           </template>
         </el-table-column>
 
@@ -574,7 +559,8 @@ onMounted(async () => {
   font-family: Consolas, Monaco, monospace;
 }
 
-/* ============ ★ L1 / L2 标签颜色 ============ */
+/* ============ 标签颜色 ============ */
+/* L1：青色发光 */
 :deep(.level-tag-l1) {
   background: rgba(0, 240, 255, 0.15) !important;
   border-color: rgba(0, 240, 255, 0.5) !important;
@@ -582,10 +568,27 @@ onMounted(async () => {
   font-weight: 600;
 }
 
+/* L2：紫色发光 */
 :deep(.level-tag-l2) {
   background: rgba(124, 77, 255, 0.15) !important;
   border-color: rgba(124, 77, 255, 0.5) !important;
   color: #a78bfa !important;
+  font-weight: 600;
+}
+
+/* ★ L3：橙色发光 */
+:deep(.level-tag-l3) {
+  background: rgba(255, 170, 51, 0.15) !important;
+  border-color: rgba(255, 170, 51, 0.5) !important;
+  color: #ffaa33 !important;
+  font-weight: 600;
+}
+
+/* ★ L4：绿色发光 */
+:deep(.level-tag-l4) {
+  background: rgba(0, 255, 157, 0.15) !important;
+  border-color: rgba(0, 255, 157, 0.5) !important;
+  color: #00ff9d !important;
   font-weight: 600;
 }
 
@@ -597,8 +600,9 @@ onMounted(async () => {
   flex-wrap: nowrap !important;
 }
 
+/* ★ 加大层级缩进 */
 :deep(.dict-table .el-table__indent) {
-  padding-left: 12px !important;
+  padding-left: 32px !important;
   flex-shrink: 0 !important;
   box-sizing: content-box;
 }
@@ -680,5 +684,87 @@ onMounted(async () => {
 :deep(.el-table__expanded-cell) {
   background: rgba(10, 15, 30, 0.7) !important;
   border-bottom: 1px solid rgba(0, 240, 255, 0.15) !important;
+}
+
+/* ============ ★ 层级视觉增强 ============ */
+/* 每一级左侧加竖线，明确层级归属 */
+
+/* L2：一条竖线 */
+:deep(.dict-table .el-table__body .el-table__row--level-2 td:first-child .cell) {
+  position: relative;
+}
+:deep(.dict-table .el-table__body .el-table__row--level-2 td:first-child .cell)::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(124, 77, 255, 0.35);    /* 紫色 */
+  border-radius: 1px;
+}
+
+/* L3：两条竖线 */
+:deep(.dict-table .el-table__body .el-table__row--level-3 td:first-child .cell) {
+  position: relative;
+}
+:deep(.dict-table .el-table__body .el-table__row--level-3 td:first-child .cell)::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(124, 77, 255, 0.2);
+  border-radius: 1px;
+}
+:deep(.dict-table .el-table__body .el-table__row--level-3 td:first-child .cell)::after {
+  content: '';
+  position: absolute;
+  left: 52px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 170, 51, 0.35);    /* 橙色 */
+  border-radius: 1px;
+}
+
+/* L4：三条竖线 */
+:deep(.dict-table .el-table__body .el-table__row--level-4 td:first-child .cell) {
+  position: relative;
+}
+:deep(.dict-table .el-table__body .el-table__row--level-4 td:first-child .cell)::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(124, 77, 255, 0.15);
+  border-radius: 1px;
+}
+:deep(.dict-table .el-table__body .el-table__row--level-4 td:first-child .cell)::after {
+  content: '';
+  position: absolute;
+  left: 52px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 170, 51, 0.2);
+  border-radius: 1px;
+}
+
+/* L4 第三条竖线：用 background 渐变，避免 box-shadow 覆盖整行 */
+:deep(.dict-table .el-table__body .el-table__row--level-4 td:first-child .cell) {
+  background-image: linear-gradient(
+    to right,
+    transparent 83px,
+    rgba(0, 255, 157, 0.35) 83px,
+    rgba(0, 255, 157, 0.35) 85px,
+    transparent 85px
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-position: 0 0;
 }
 </style>
