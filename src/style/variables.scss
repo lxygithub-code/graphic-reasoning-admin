@@ -1,35 +1,187 @@
-// ============ 深色科技主题 ============
-// 背景层
-$bg-base:        #050810;   // 最深背景
-$bg-body:        #0d1428;   // 页面背景
-$bg-card:        rgba(20, 28, 48, 0.9);   // 卡片背景
-$bg-card-hover:  rgba(25, 35, 60, 0.95);
-$bg-input:       rgba(15, 22, 40, 0.8);
+// ============================================================
+//  src/style/variables.scss
+//  深色科技主题 · Design Tokens
+//  - 上半部分：SCSS 源变量（编译期使用，用于 !important 覆盖）
+//  - 下半部分：输出为 :root CSS 变量（运行时使用）
+// ============================================================
 
-// 边框
-$border-base:    rgba(0, 240, 255, 0.15);
-$border-hover:   rgba(0, 240, 255, 0.5);
-$border-active:  rgba(0, 240, 255, 0.8);
+// ------------------------------------------------------------
+//  1. SCSS 源变量
+// ------------------------------------------------------------
 
-// 文字
-$text-primary:   #e0e6ff;   // 主文字
-$text-regular:   #c4cce6;   // 常规
-$text-secondary: #8892c4;   // 次要
-$text-disabled:  #5a6288;   // 禁用
+// -------- 背景层 --------
+$bg-base:         #050810;
+$bg-body:         #0d1428;
+$bg-card:         rgba(20, 28, 48, 0.90);
+$bg-card-hover:   rgba(25, 35, 60, 0.95);
+$bg-input:        rgba(15, 22, 40, 0.80);
+$bg-deep:         rgba(10, 15, 30, 0.70);
+$bg-header:       rgba(15, 22, 40, 0.95);
+$bg-overlay:      rgba(5,  8,  16, 0.80);
+$bg-popper:       rgba(20, 28, 48, 0.98);
+$bg-loading:      rgba(5,  8,  16, 0.70);
+$bg-striped:      rgba(15, 22, 40, 0.60);
+$bg-nested-head:  rgba(10, 15, 30, 0.95);
+$bg-nested-row:   rgba(10, 15, 30, 0.50);
+$bg-hover-row:    rgba(0,  240, 255, 0.08);
+$bg-active-row:   rgba(0,  240, 255, 0.12);
 
-// 主题色（霓虹四色）
-$color-primary:  #00f0ff;   // 青
-$color-purple:   #7c4dff;   // 紫
-$color-success:  #00ff9d;   // 绿
-$color-danger:   #ff4d94;   // 粉/红
-$color-warning:  #ffaa33;   // 橙
+// -------- 边框 --------
+$border-base:     rgba(0, 240, 255, 0.15);
+$border-light:    rgba(0, 240, 255, 0.10);
+$border-hover:    rgba(0, 240, 255, 0.50);
+$border-active:   rgba(0, 240, 255, 0.80);
+$border-table:    rgba(0, 240, 255, 0.12);
+$border-table-td: rgba(0, 240, 255, 0.08);
 
-// 渐变
+// -------- 文字 --------
+$text-primary:    #e0e6ff;
+$text-regular:    #c4cce6;
+$text-secondary:  #8892c4;
+$text-disabled:   #5a6288;
+$text-hover:      #ffffff;
+
+// -------- 主题色 --------
+$color-primary:   #00f0ff;
+$color-purple:    #7c4dff;
+$color-success:   #00ff9d;
+$color-danger:    #ff4d94;
+$color-warning:   #ffaa33;
+$color-info:      #8892c4;
+
+// -------- 渐变 --------
 $gradient-primary: linear-gradient(135deg, #00f0ff, #7c4dff);
 $gradient-purple:  linear-gradient(135deg, #7c4dff, #ff4d94);
 $gradient-success: linear-gradient(135deg, #00ff9d, #00f0ff);
+$gradient-dialog:  linear-gradient(
+  135deg,
+  rgba(20, 28, 48, 0.98),
+  rgba(15, 20, 38, 0.98)
+);
 
-// 阴影
-$shadow-card:    0 8px 30px rgba(0, 240, 255, 0.1);
-$shadow-hover:   0 8px 30px rgba(0, 240, 255, 0.2);
-$shadow-glow:    0 0 20px rgba(0, 240, 255, 0.3);
+// -------- 阴影 --------
+$shadow-card:  0 8px 30px rgba(0, 240, 255, 0.10);
+$shadow-hover: 0 8px 30px rgba(0, 240, 255, 0.20);
+$shadow-glow:  0 0    20px rgba(0, 240, 255, 0.30);
+
+// ------------------------------------------------------------
+//  2. 输出 CSS 变量
+// ------------------------------------------------------------
+:root {
+  color-scheme: dark;
+
+  // -------- 通用主题变量 --------
+  --c-bg-base:        #{$bg-base};
+  --c-bg-body:        #{$bg-body};
+  --c-bg-card:        #{$bg-card};
+  --c-bg-card-hover:  #{$bg-card-hover};
+  --c-bg-input:       #{$bg-input};
+  --c-bg-deep:        #{$bg-deep};
+  --c-bg-header:      #{$bg-header};
+  --c-bg-overlay:     #{$bg-overlay};
+  --c-bg-popper:      #{$bg-popper};
+  --c-bg-hover-row:   #{$bg-hover-row};
+  --c-bg-active-row:  #{$bg-active-row};
+
+  --c-border-base:    #{$border-base};
+  --c-border-light:   #{$border-light};
+  --c-border-hover:   #{$border-hover};
+  --c-border-active:  #{$border-active};
+
+  --c-text-primary:   #{$text-primary};
+  --c-text-regular:   #{$text-regular};
+  --c-text-secondary: #{$text-secondary};
+  --c-text-disabled:  #{$text-disabled};
+  --c-text-hover:     #{$text-hover};
+
+  --c-primary:  #{$color-primary};
+  --c-purple:   #{$color-purple};
+  --c-success:  #{$color-success};
+  --c-danger:   #{$color-danger};
+  --c-warning:  #{$color-warning};
+  --c-info:     #{$color-info};
+
+  --c-gradient-primary: #{$gradient-primary};
+  --c-gradient-purple:  #{$gradient-purple};
+  --c-gradient-success: #{$gradient-success};
+  --c-gradient-dialog:  #{$gradient-dialog};
+  --c-shadow-card:      #{$shadow-card};
+  --c-shadow-hover:     #{$shadow-hover};
+  --c-shadow-glow:      #{$shadow-glow};
+
+  // ==========================================================
+  //  Element Plus 变量覆盖
+  // ==========================================================
+
+  // 主色
+  --el-color-primary:         #{$color-primary};
+  --el-color-primary-light-3: #4dd0ff;
+  --el-color-primary-light-5: #80e0ff;
+  --el-color-primary-light-7: #b3eeff;
+  --el-color-primary-light-8: #ccf4ff;
+  --el-color-primary-light-9: #e6f9ff;
+  --el-color-primary-dark-2:  #00c0cc;
+
+  // 状态色
+  --el-color-success: #{$color-success};
+  --el-color-warning: #{$color-warning};
+  --el-color-danger:  #{$color-danger};
+  --el-color-error:   #{$color-danger};
+  --el-color-info:    #{$color-info};
+
+  // 文字
+  --el-text-color-primary:   #{$text-primary};
+  --el-text-color-regular:   #{$text-regular};
+  --el-text-color-secondary: #{$text-secondary};
+  --el-text-color-disabled:  #{$text-disabled};
+
+  // 背景
+  --el-bg-color:         #{$bg-card};
+  --el-bg-color-page:    #{$bg-body};
+  --el-bg-color-overlay: #{$bg-popper};
+
+  // 边框
+  --el-border-color:             #{$border-base};
+  --el-border-color-light:       #{$border-base};
+  --el-border-color-lighter:     #{$border-base};
+  --el-border-color-extra-light: #{$border-light};
+  --el-border-color-dark:        #{$border-hover};
+  --el-border-color-darker:      #{$border-active};
+
+  // 填充
+  --el-fill-color:         rgba(15, 22, 40, 0.60);
+  --el-fill-color-light:   #{$bg-input};
+  --el-fill-color-lighter: rgba(15, 22, 40, 0.40);
+  --el-fill-color-blank:   transparent;
+
+  // 遮罩 / 弹层
+  --el-mask-color:            #{$bg-overlay};
+  --el-overlay-color-lighter: #{$bg-overlay};
+
+  // 卡片
+  --el-card-bg-color: #{$bg-card};
+
+  // 表格（一次性设置，减少后续 !important）
+  --el-table-bg-color:               transparent;
+  --el-table-tr-bg-color:            transparent;
+  --el-table-header-bg-color:        #{$bg-header};
+  --el-table-header-text-color:      #{$text-primary};
+  --el-table-text-color:             #{$text-primary};
+  --el-table-border-color:           #{$border-table};
+  --el-table-row-hover-bg-color:     #{$bg-hover-row};
+  --el-table-current-row-bg-color:   #{$bg-active-row};
+  --el-table-expanded-cell-bg-color: #{$bg-deep};
+
+  // 下拉菜单项
+  --el-dropdown-menuItem-hover-fill:  rgba(0, 240, 255, 0.10);
+  --el-dropdown-menuItem-hover-color: #{$color-primary};
+
+  // Message
+  --el-message-bg-color:     #{$bg-popper};
+  --el-message-border-color: #{$border-hover};
+  --el-message-text-color:   #{$text-primary};
+
+  // MessageBox
+  --el-messagebox-title-color:   #{$text-primary};
+  --el-messagebox-border-radius: 16px;
+}
