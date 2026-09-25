@@ -820,11 +820,6 @@ const handleAnalysisUpload = async (file, item) => {
 const handleSubmit = async () => {
   await formRef.value.validate()
 
-  if (!form.category) {
-    ElMessage.error('请选择题目类型')
-    return
-  }
-
   const currentSource = form.source
 
   if (form.id) {
