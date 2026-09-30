@@ -61,3 +61,21 @@ export function listQuestionsBySource(source) {
     params: { source }
   })
 }
+
+/** ★ 新增：批量设置某套卷下所有题目的可抽取状态 */
+export function updateSourceExtractable(source, extractable) {
+  return request({
+    url: '/admin/question/source/extractable',
+    method: 'put',
+    params: { source, extractable }
+  })
+}
+
+/** ★ 新增：设置单道题目的可抽取状态 */
+export function updateQuestionExtractable(id, extractable) {
+  return request({
+    url: `/admin/question/${id}/extractable`,
+    method: 'put',
+    params: { extractable }
+  })
+}

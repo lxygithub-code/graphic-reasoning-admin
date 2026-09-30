@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 搜索栏 -->
-   <el-card class="search-card">
+    <el-card class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item label="套卷">
           <el-input v-model="query.source" placeholder="输入关键词模糊搜索" clearable style="width: 220px"
@@ -29,6 +29,14 @@
           </el-select>
         </el-form-item>
 
+        <!-- ★ 新增：抽取状态筛选 -->
+        <el-form-item label="抽取">
+          <el-select v-model="query.extractable" placeholder="全部" clearable style="width: 130px" @change="loadSources">
+            <el-option label="全部可抽取" :value="1" />
+            <el-option label="含不可抽取" :value="0" />
+          </el-select>
+        </el-form-item>
+
         <el-form-item>
           <el-button type="primary" @click="loadSources">查询</el-button>
           <el-button @click="resetQuery">重置</el-button>
@@ -52,13 +60,26 @@
                 <el-table-column type="index" width="60" label="序号" align="center" />
                 <el-table-column prop="content" label="题目内容" show-overflow-tooltip />
                 <el-table-column prop="category" label="类型" width="160" />
-               <el-table-column label="考试" width="140" align="center">
+                <el-table-column label="考试" width="140" align="center">
                   <template #default="{ row: q }">
                     {{ examTypeLabel(q.examType) }}
                     <template v-if="q.examSubType">-{{ q.examSubType }}类</template>
                   </template>
                 </el-table-column>
                 <el-table-column prop="difficulty" label="难度" width="80" align="center" />
+
+                <!-- ★ 新增：单题可抽取开关 -->
+                <el-table-column label="可抽取" width="90" align="center">
+                  <template #default="{ row: q }">
+                    <el-switch
+                      :model-value="q.canExtract === 1"
+                      active-color="#00f0ff"
+                      inactive-color="#5a6288"
+                      @change="val => handleQuestionExtractToggle(q, val)"
+                    />
+                  </template>
+                </el-table-column>
+
                 <el-table-column label="操作" width="200" fixed="right" align="center">
                   <template #default="{ row: q }">
                     <el-button link type="primary" size="small" @click.stop="openDetail(q)">查看</el-button>
@@ -79,17 +100,38 @@
               <el-icon><Files /></el-icon>
               <span class="source-name">{{ row.label }}</span>
               <el-tag v-if="!row.source" type="warning" size="small" effect="plain">未分类</el-tag>
+              <el-tag v-if="isSourcePartial(row)" type="danger" size="small" effect="plain">
+                {{ row.extractableCount }}/{{ row.count }} 可抽
+              </el-tag>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column label="题目数量" width="140" align="center">
+        <el-table-column label="题目数量" width="120" align="center">
           <template #default="{ row }">
             <el-tag type="info" effect="plain">{{ row.count }} 题</el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="220" align="center">
+        <!-- ★ 新增：套卷级可抽取开关 -->
+        <el-table-column label="可抽取" width="150" align="center">
+          <template #default="{ row }">
+            <el-tooltip :content="extractTooltip(row)" placement="top">
+              <el-switch
+                :model-value="row.extractableCount === row.count"
+                :active-color="isSourcePartial(row) ? '#ffaa33' : '#00f0ff'"
+                inactive-color="#5a6288"
+                :loading="row.extractLoading"
+                @change="val => handleSourceExtractToggle(row, val)"
+              />
+            </el-tooltip>
+            <el-tag v-if="isSourcePartial(row)" type="warning" size="small" effect="plain" style="margin-left: 6px">
+              部分
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="200" align="center">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click.stop="toggleExpand(row)">
               {{ row.expanded ? '收起' : '展开' }}
@@ -264,6 +306,13 @@
           </el-select>
         </el-form-item>
 
+        <!-- ★ 新增：编辑已有题目时的可抽取开关 -->
+        <el-form-item label="可抽取" v-if="form.id">
+          <el-switch v-model="form.canExtract" :active-value="1" :inactive-value="0"
+            active-color="#00f0ff" inactive-color="#5a6288" />
+          <span class="form-tip" style="margin-left: 12px">关闭后该题不会出现在抽题结果中</span>
+        </el-form-item>
+
         <el-form-item label="难度">
           <el-rate v-model="form.difficulty" :max="5" />
         </el-form-item>
@@ -281,11 +330,19 @@
         <el-descriptions-item label="ID">{{ detail.id }}</el-descriptions-item>
         <el-descriptions-item label="难度">{{ detail.difficulty }}</el-descriptions-item>
         <el-descriptions-item label="题目类型">{{ detail.category }}</el-descriptions-item>
-       <el-descriptions-item label="考试类型">
+        <el-descriptions-item label="考试类型">
           {{ examTypeLabel(detail.examType) }}
           <template v-if="detail.examSubType">-{{ detail.examSubType }}类</template>
         </el-descriptions-item>
         <el-descriptions-item label="来源" :span="2">{{ detail.source || '-' }}</el-descriptions-item>
+
+        <!-- ★ 新增：可抽取状态 -->
+        <el-descriptions-item label="可抽取" :span="2">
+          <el-tag :type="detail.canExtract === 1 ? 'success' : 'danger'" size="small" effect="plain">
+            {{ detail.canExtract === 1 ? '可抽取' : '禁止抽取' }}
+          </el-tag>
+        </el-descriptions-item>
+
         <el-descriptions-item label="题目内容" :span="2">
           <div style="white-space: pre-wrap">{{ detail.content }}</div>
         </el-descriptions-item>
@@ -344,12 +401,15 @@ import {
   deleteQuestion,
   getQuestionDetail,
   listQuestionSources,
-  listQuestionsBySource
+  listQuestionsBySource,
+  // ★ 新增
+  updateSourceExtractable,
+  updateQuestionExtractable
 } from '@/api/question'
 import { uploadImage } from '@/api/upload'
 import { treeDict, listDict } from '@/api/dict'
 
-const BACKEND = 'http://localhost:8866'
+const BACKEND = '/api'
 const fullUrl = (u) => (u ? (u.startsWith('http') ? u : BACKEND + u) : '')
 
 // ==================== 列表 ====================
@@ -359,14 +419,16 @@ const sourceTableRef = ref()
 const query = reactive({
   source: '',
   examType: '',
-  examSubType: ''
+  examSubType: '',
+  extractable: null // ★ 新增：null=全部 / 1=全部可抽 / 0=含不可抽
 })
 
 const detailVisible = ref(false)
 const detail = ref({
   id: null, content: '', options: [], correctOption: '',
   category: '', examType: '', source: '', difficulty: 1, imageUrl: '',
-  analysis: '', analyses: []
+  analysis: '', analyses: [],
+  canExtract: 1 // ★ 新增
 })
 
 // ==================== 字典 ====================
@@ -472,7 +534,7 @@ const loadSources = async () => {
       ? sourceDictOptions.value
       : await listDict('question_source')
 
-    const merged = []
+    let merged = []
     const seen = new Set()
 
     dictList.forEach(d => {
@@ -484,6 +546,8 @@ const loadSources = async () => {
         source: d.dictValue,
         label: d.dictLabel,
         count: stat.count,
+        // ★ 新增：可抽取数量（后端未返回时兜底为全部可抽）
+        extractableCount: stat.extractableCount ?? stat.count,
         examType: stat.examType,
         examSubType: stat.examSubType
       })
@@ -498,12 +562,20 @@ const loadSources = async () => {
           source: s.source || '',
           label: s.source || '未分类',
           count: s.count,
+          extractableCount: s.extractableCount ?? s.count,
           examType: s.examType || '',
           examSubType: s.examSubType || ''
         })
         seen.add(s.source)
       }
     })
+
+    // ★ 新增：按抽取状态筛选
+    if (query.extractable === 1) {
+      merged = merged.filter(s => s.extractableCount === s.count)
+    } else if (query.extractable === 0) {
+      merged = merged.filter(s => s.extractableCount < s.count)
+    }
 
     const oldMap = new Map(sourceList.value.map(s => [s.rowKey, s]))
     sourceList.value = merged.map(s => {
@@ -517,6 +589,7 @@ const loadSources = async () => {
     loading.value = false
   }
 }
+
 const handleRowClick = (row) => {
   toggleExpand(row)
 }
@@ -569,11 +642,60 @@ const addQuestionToSource = async (source) => {
   await openEdit(null, source || '')
 }
 
+// ==================== ★ 抽取状态（新增） ====================
+const isSourcePartial = (row) => row.extractableCount > 0 && row.extractableCount < row.count
+
+const extractTooltip = (row) => {
+  if (row.extractableCount === row.count) return '全部可抽取'
+  if (row.extractableCount === 0) return '全部禁止抽取'
+  return `部分可抽取（${row.extractableCount}/${row.count}）`
+}
+
+/** 套卷级：全开 / 全关 */
+const handleSourceExtractToggle = async (row, val) => {
+  const newVal = val ? 1 : 0
+  const actionText = newVal ? '允许' : '禁止'
+  row.extractLoading = true
+  try {
+    await updateSourceExtractable(row.source || '', newVal)
+    row.extractableCount = newVal ? row.count : 0
+    if (row.questions) {
+      row.questions.forEach(q => { q.canExtract = newVal })
+    }
+    if (query.extractable !== null) await loadSources()
+    ElMessage.success(`已${actionText}抽取该套卷下所有题目`)
+  } catch (e) {
+    ElMessage.error('操作失败')
+  } finally {
+    row.extractLoading = false
+  }
+}
+
+/** 题目级：单题切换 */
+const handleQuestionExtractToggle = async (q, val) => {
+  const newVal = val ? 1 : 0
+  try {
+    await updateQuestionExtractable(q.id, newVal)
+    q.canExtract = newVal
+
+    // 同步父套卷统计
+    const parent = sourceList.value.find(s => s.source === (q.source || ''))
+    if (parent) {
+      if (newVal) parent.extractableCount = Math.min(parent.count, parent.extractableCount + 1)
+      else parent.extractableCount = Math.max(0, parent.extractableCount - 1)
+    }
+    ElMessage.success(newVal ? '该题已允许抽取' : '该题已禁止抽取')
+  } catch (e) {
+    ElMessage.error('操作失败')
+  }
+}
+
 // ==================== 搜索栏 ====================
 const resetQuery = () => {
   query.source = ''
   query.examType = ''
   query.examSubType = ''
+  query.extractable = null // ★ 新增
   queryL2Options.value = []
   loadSources()
 }
@@ -594,7 +716,8 @@ const form = reactive({
   difficulty: 1,
   imageUrl: '',
   analysis: '',
-  analyses: []
+  analyses: [],
+  canExtract: 1 // ★ 新增
 })
 
 const rules = {
@@ -656,6 +779,7 @@ const openEdit = async (row, defaultSource = '') => {
       categoryPath: buildCategoryPath(data.category),
       examType: data.examType || '',
       examSubType: data.examSubType || '',
+      canExtract: data.canExtract ?? 1, // ★ 新增
       analyses: (data.analyses || []).map(a => ({
         platform: a.platform,
         type: a.type || 'text',
@@ -681,7 +805,8 @@ const openEdit = async (row, defaultSource = '') => {
       difficulty: 1,
       imageUrl: '',
       analysis: '',
-      analyses: []
+      analyses: [],
+      canExtract: 1
     })
   }
 
@@ -841,6 +966,7 @@ const openDetail = async (row) => {
   const data = await getQuestionDetail(row.id)
   detail.value = {
     ...data,
+    canExtract: data.canExtract ?? 1, // ★ 新增
     options: JSON.parse(JSON.stringify(data.options || [])).map(o => ({
       key: o.key,
       type: o.type || 'text',
@@ -1117,5 +1243,11 @@ onUnmounted(() => {
 .source-name {
   font-weight: 600;
   color: #e0e6ff;
+}
+
+/* ★ 新增：表单提示文字 */
+.form-tip {
+  font-size: 12px;
+  color: #8892c4;
 }
 </style>

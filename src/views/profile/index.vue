@@ -79,7 +79,7 @@ import { uploadImage } from '@/api/upload'
 const router = useRouter()
 const userStore = useUserStore()
 
-const BACKEND = 'http://localhost:8866'
+const BACKEND = '/api'
 const fullUrl = (u) => (u ? (u.startsWith('http') ? u : BACKEND + u) : '')
 
 // ============ 基本信息 ============
