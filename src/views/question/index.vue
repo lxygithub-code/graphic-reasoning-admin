@@ -58,8 +58,14 @@
               <el-table :data="row.questions || []" v-loading="row.loading" size="small" border
                 :empty-text="row.loading ? '加载中...' : '该套卷暂无题目'">
                 <el-table-column type="index" width="60" label="序号" align="center" />
-                <el-table-column prop="content" label="题目内容" show-overflow-tooltip />
-                <el-table-column prop="category" label="类型" width="160" />
+                <el-table-column prop="content" min-width="300" label="题目内容" show-overflow-tooltip />
+               <!-- 列表：类型列 -->
+               <el-table-column label="类型" min-width="180" class-name="category-cell">
+                  <template #default="{ row: q }">
+                    <span v-if="q.category">{{ categoryLabel(q.category) }}</span>
+                    <span v-else>-</span>
+                  </template>
+                </el-table-column>
                 <el-table-column label="考试" width="140" align="center">
                   <template #default="{ row: q }">
                     {{ examTypeLabel(q.examType) }}
@@ -329,7 +335,10 @@
       <el-descriptions :column="2" border>
         <el-descriptions-item label="ID">{{ detail.id }}</el-descriptions-item>
         <el-descriptions-item label="难度">{{ detail.difficulty }}</el-descriptions-item>
-        <el-descriptions-item label="题目类型">{{ detail.category }}</el-descriptions-item>
+       <!-- 详情弹窗：题目类型 -->
+        <el-descriptions-item label="题目类型">
+          {{ categoryLabel(detail.category) }}
+        </el-descriptions-item>
         <el-descriptions-item label="考试类型">
           {{ examTypeLabel(detail.examType) }}
           <template v-if="detail.examSubType">-{{ detail.examSubType }}类</template>
@@ -717,7 +726,7 @@ const form = reactive({
   imageUrl: '',
   analysis: '',
   analyses: [],
-  canExtract: 1 // ★ 新增
+  canExtract: 1
 })
 
 const rules = {
@@ -726,40 +735,30 @@ const rules = {
   source: [{ required: true, message: '请选择套卷', trigger: 'change' }]
 }
 
-/** 级联选择变化 → 把路径 label 拼成 category 文本 */
-const handleCategoryChange = (path) => {
-  if (!path || !path.length) {
-    form.category = ''
-    return
-  }
+/** value 路径 → label 路径（仅用于展示） */
+const categoryLabel = (valuePath) => {
+  if (!valuePath) return '-'
+  const parts = valuePath.split('/')
   const labels = []
   let nodes = categoryTree.value
-  for (const val of path) {
+  for (const val of parts) {
     const node = nodes.find(n => n.dictValue === val)
-    if (node) {
-      labels.push(node.dictLabel)
-      nodes = node.children || []
-    }
+    if (!node) return valuePath
+    labels.push(node.dictLabel)
+    nodes = node.children || []
   }
-  form.category = labels.join('/')
+  return labels.join('/')
 }
 
-/** 从 category 文本反查路径（编辑回显用） */
-const buildCategoryPath = (categoryText) => {
-  if (!categoryText) return []
-  const labels = categoryText.split('/').filter(Boolean)
-  const path = []
-  let nodes = categoryTree.value
-  for (const label of labels) {
-    const node = nodes.find(n => n.dictLabel === label)
-    if (node) {
-      path.push(node.dictValue)
-      nodes = node.children || []
-    } else {
-      break
-    }
-  }
-  return path
+/** 级联变化 → 直接拼 value 路径 */
+const handleCategoryChange = (path) => {
+  form.category = path && path.length ? path.join('/') : ''
+}
+
+/** value 路径 → cascader 路径（编辑回显用） */
+const buildCategoryPath = (categoryValue) => {
+  if (!categoryValue) return []
+  return categoryValue.split('/').filter(Boolean)
 }
 
 const openEdit = async (row, defaultSource = '') => {
@@ -1009,6 +1008,17 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* 类型列：自动换行 */
+:deep(.category-cell .cell) {
+  white-space: normal !important;
+  word-break: break-all;
+  line-height: 1.5;
+  overflow: visible;
+  text-overflow: clip;
+  padding: 8px 12px;
+  box-sizing: border-box;
+}
+
 .search-card { margin-bottom: 16px; }
 .table-card { padding: 0; }
 
