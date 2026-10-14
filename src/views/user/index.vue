@@ -37,8 +37,16 @@
               inactive-color="#5a6288" />
           </template>
         </el-table-column>
-        <el-table-column prop="lastLoginTime" label="最近登录" width="180" />
-        <el-table-column prop="createTime" label="注册时间" width="180" />
+       <el-table-column label="最近活跃" width="170" align="center">
+          <template #default="{ row }">
+            {{ row.lastActiveTime || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="注册时间" width="170" align="center">
+          <template #default="{ row }">
+            {{ row.createTime || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
